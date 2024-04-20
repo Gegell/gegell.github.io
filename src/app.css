@@ -71,7 +71,14 @@ html {
     --surface-4: var(--surface-4-dark);
     --background: var(--background-dark);
     --border: var(--border-dark);
+
+    .shiki,
+    .shiki span {
+        color: var(--shiki-dark);
+        background-color: var(--shiki-dark-bg);
+    }
 }
+
 
 [color-scheme='light'] {
     color-scheme: light;
@@ -85,6 +92,13 @@ html {
     --surface-4: var(--surface-4-light);
     --background: var(--background-light);
     --border: var(--border-light);
+
+    .shiki,
+    .shiki span {
+        color: var(--shiki-light);
+        background-color: var(--shiki-light-bg);
+        box-shadow: var(--shadow-2);
+    }
 }
 
 html,
@@ -103,9 +117,9 @@ img {
     border-radius: var(--radius-3);
 }
 
-pre.shiki {
+.shiki {
     border-radius: var(--radius-3);
-    padding: var(--size-3);
+    padding: var(--size-3) var(--size-4);
     box-shadow: var(--shadow-3);
     font-family: var(--font-mono);
     align-self: center;

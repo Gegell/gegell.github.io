@@ -59,7 +59,7 @@
   .tags span {
     padding-block: var(--size-1);
     padding-inline: var(--size-3);
-    border-radius: var(--size-4);
+    border-radius: var(--radius-round);
     background-color: var(--surface-4);
     color: var(--text-2);
   }

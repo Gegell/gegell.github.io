@@ -14,11 +14,17 @@ const mdsvexOptions = {
 	highlight: {
 		highlighter: async (code, lang = 'text') => {
 			const highlighter = await getHighlighter({
-				themes: ['ayu-dark'],
+				themes: ['ayu-dark', 'min-light'],
 				langs: ['python']
 			});
-			await highlighter.loadLanguage('python');
-			const html = escapeSvelte(highlighter.codeToHtml(code, { lang, theme: 'ayu-dark' }))
+			const html = escapeSvelte(highlighter.codeToHtml(code, {
+				lang: lang,
+				themes: {
+					dark: 'ayu-dark',
+					light: 'min-light'
+				},
+				defaultColor: false
+			}))
 			return `{@html \`${html}\`}`
 		}
 	}
