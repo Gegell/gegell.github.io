@@ -103,6 +103,15 @@ img {
     border-radius: var(--radius-3);
 }
 
+pre.shiki {
+    border-radius: var(--radius-3);
+    padding: var(--size-3);
+    box-shadow: var(--shadow-3);
+    font-family: var(--font-mono);
+    align-self: center;
+    margin-inline: auto;
+}
+
 .surface-1 {
     background-color: var(--surface-1);
     color: var(--text-2);
