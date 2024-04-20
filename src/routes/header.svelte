@@ -1,6 +1,7 @@
 <script lang="ts">
 	import * as config from '$lib/config';
 	import { base } from '$app/paths';
+	import ThemeToggle from './themeToggle.svelte';
 </script>
 
 <nav>
@@ -10,7 +11,7 @@
 	</a>
 
 	<!-- Theme -->
-	<button>Toggle</button>
+	<ThemeToggle />
 
 	<!-- Navigation -->
 	<ul class="links">
