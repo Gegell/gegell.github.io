@@ -36,3 +36,10 @@ npm run build
 You can preview the production build with `npm run preview`.
 
 > To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
+
+
+# Resources
+A list of resources that I found useful while working on this project.
+- [How to deploy a SvelteKit website to GitHub pages](https://www.okupter.com/blog/deploy-sveltekit-website-to-github-pages)
+- [Joy of Code - Build A SvelteKit Markdown Blog](https://joyofcode.xyz/sveltekit-markdown-blog)
+- [Svelte-Remixicon](https://github.com/aantusahaa/svelte-remixicon) a Svelte component library for Remixicon.
