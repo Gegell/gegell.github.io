@@ -33,13 +33,13 @@
 
 <style>
   article {
-    max-width: 800px;
+    max-width: 90ch;
     margin-inline: auto;
     padding-inline: var(--size-3);
   }
 
   .title h1 {
-    font-size: var(--size-8);
+    font-size: var(--font-size-6);
     margin-block: var(--size-3);
     color: var(--brand);
     max-width: 100%;
@@ -63,5 +63,4 @@
     background-color: var(--surface-4);
     color: var(--text-2);
   }
-
 </style>

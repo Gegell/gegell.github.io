@@ -117,6 +117,25 @@ img {
     border-radius: var(--radius-3);
 }
 
+.prose {
+    text-align: justify;
+
+    h2, h3, h4, h5, h6 {
+        margin-top: var(--size-5);
+        margin-bottom: var(--size-2);
+    }
+
+    p:not(:first-child), li {
+        margin-top: var(--font-size-1);
+    }
+
+    p,
+    li,
+    blockquote {
+        max-inline-size: var(--size-content-3);
+    }
+}
+
 .shiki {
     border-radius: var(--radius-3);
     padding: var(--size-3) var(--size-4);
