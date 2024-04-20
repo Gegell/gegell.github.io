@@ -6,12 +6,14 @@
 
 <nav>
 	<!-- Title -->
-	<a href="{base}/" class="title">
-		<b>{config.title}</b>
-	</a>
+	<div class="top-row">
+		<a href="{base}/" class="title">
+			<b>{config.title}</b>
+		</a>
 
-	<!-- Theme -->
-	<ThemeToggle />
+		<!-- Theme -->
+		<ThemeToggle />
+	</div>
 
 	<!-- Navigation -->
 	<ul class="links">
@@ -24,10 +26,14 @@
 <style>
 	nav {
 		padding-block: var(--size-7);
+		gap: var(--size-7);
 	}
 
-	.links {
-		margin-block: var(--size-7);
+	.top-row {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		flex: 1;
 	}
 
 	a {
@@ -35,9 +41,13 @@
 		text-decoration: none;
 	}
 
-	ul {
+	ul.links {
 		list-style: none;
+		display: flex;
 		padding: 0;
+		flex-direction: column;
+		align-items: start;
+		max-width: fit-content;
 	}
 
 	li {
@@ -50,9 +60,10 @@
 			justify-content: space-between;
 		}
 
-		.links {
-			display: flex;
-			gap: var(--size-7);
+		ul.links {
+			gap: var(--size-4);
+			align-items: center;
+			flex-direction: row;
 			margin-block: 0;
 		}
 	}

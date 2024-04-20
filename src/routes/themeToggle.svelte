@@ -27,6 +27,7 @@
 		border: none;
 		cursor: pointer;
 		box-shadow: none;
+		padding-inline: 0;
 	}
 
 	button div {

@@ -29,7 +29,7 @@ You can find me (for now) on:
 
 <style>
 	h1 {
-		margin-block: var(--size-7) 0;
+		margin-block: 0;
 	}
 
 	h2 {
