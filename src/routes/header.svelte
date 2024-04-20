@@ -1,18 +1,19 @@
 <script lang="ts">
 	import * as config from '$lib/config';
+	import { base } from '$app/paths';
 </script>
 
 <nav>
 	<!-- Title -->
-	<a href="/" class="title">
+	<a href="{base}/" class="title">
 		<b>{config.title}</b>
 	</a>
 
 	<!-- Navigation -->
 	<ul class="links">
-		<li><a href="/">Home</a></li>
-		<li><a href="/about">About</a></li>
-		<li><a href="/contact">Contact</a></li>
+		<li><a href="{base}/">Home</a></li>
+		<li><a href="{base}/about">About</a></li>
+		<li><a href="{base}/contact">Contact</a></li>
 		<!-- <li><a href="/rss.xml" target="_blank">RSS</a></li> -->
 	</ul>
 
@@ -34,8 +35,7 @@
 		text-decoration: none;
 	}
 
-	ul,
-	ol {
+	ul {
 		list-style: none;
 		padding: 0;
 	}
