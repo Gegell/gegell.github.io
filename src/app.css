@@ -134,6 +134,11 @@ img {
     blockquote {
         max-inline-size: var(--size-content-3);
     }
+
+    hr {
+        margin-block: var(--size-fluid-2);
+        background-color: var(--surface-4);
+    }
 }
 
 .shiki {
