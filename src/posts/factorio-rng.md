@@ -20,7 +20,7 @@ So how did we get here? The following is my journey to figure out how Factorio's
    for cracking the RNG in (vanilla) Minecraft. This fascinated me for quite some
    time, and I've kept the idea in the back of my head for a while.
 2. **Factorio Friday Fact #375** (08.09.2023):
-   The factorio devs just recently broke their silence with regard to the 2.0 update.
+   The factorio devs just recently broke their silence with regards to the 2.0 update.
    This was the 3rd FFF since they restarted their devlogs, and boy was it a controversial one.
    They introduced a big new feature called "*Quality*".
    It basically is now possible to obtain items with an increased quality level,
@@ -56,7 +56,7 @@ So how did we get here? The following is my journey to figure out how Factorio's
    that the game always behaves in a deterministic fashion (enabling replays and multiplayer).
 
    Thus a truly cursed idea was born:
-   > What if I *could* reverse-engineer the RNG in Factorio?
+   > "What if I *could* reverse-engineer the RNG in Factorio?"
 
    This would enable me to predict the quality level of the next crafted item.
    And if I could do that, then I could also predict how many RNG calls it would
@@ -69,6 +69,28 @@ So how did we get here? The following is my journey to figure out how Factorio's
    *How hard could it possibly be?*
 
 ## Finding the RNG
+Now dear reader, you are likely in the same position as I was at this point.
+Without any additional knowledge, the question: "*Can we break the RNG?*"
+seems like a rather daunting task.
+So let's break the problem into smaller, more manageable questions,
+which we can then tackle one by one:
+<!-- TODO: Transform this into a Q&A type of deal to show what is still unanswered -->
+<!-- TODO: In each chapter check of the corresponding question at the end if it was answered -->
+- [x] Does Factorio use a *Pseudo Random Number Generator* (PRNG)?<br>
+      (Yes - we want to break this after all)
+      <hr>
+- [ ] What PRNG does Factorio use?<br>
+      I.e. how large is the state, what is the period, how is it advanced?
+- [ ] Can it even be reversed?<br>
+      I.e. given a sequence of outputs, can we determine the internal state?
+- [ ] Where do they use it?<br>
+      There are more than just crafting recipes that use RNG. (e.g. biters, animations, etc.)
+- [ ] Do they use multiple RNGs or just a shared one?
+      I.e. do they have a single global RNG, or dedicated ones for different systems 
+      (e.g. crafting, biters, etc.)?
+- [ ] How do they use it (especially w.r.t. crafting recipes)?<br>
+      I use recipes here as proxies for the quality computation, as I don't have
+      access to the new 2.0 update yet.
 
 ### Reversal process
 <!-- Ghidra + Research (factorio forum: Cube 8 years ago) -->
@@ -81,7 +103,7 @@ So how did we get here? The following is my journey to figure out how Factorio's
 
 ## Translating to Factorio
 
-### Manual Flop
+<!-- ### Manual Flop -->
 
 ### Cnide Automation
 
