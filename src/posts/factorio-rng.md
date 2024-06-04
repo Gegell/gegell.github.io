@@ -9,6 +9,12 @@ categories:
 published: true
 ---
 
+
+<script>
+  import LFSR from './factorio-rng/lfsr'
+</script>
+
+
 So how did we get here? The following is my journey to figure out how Factorio's RNG works.
 
 
@@ -97,9 +103,10 @@ which we can then tackle one by one:
 
 ### The Implementation
 
-## Understanding the RNG
+## Understanding the PRNG
 <!-- What is an LFSR implementation vs theory -->
 <!-- ### The Theory -->
+<LFSR />
 
 ## Translating to Factorio
 
