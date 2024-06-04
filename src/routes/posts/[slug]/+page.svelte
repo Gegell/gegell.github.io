@@ -32,12 +32,6 @@
 </article>
 
 <style>
-  article {
-    max-width: 90ch;
-    margin-inline: auto;
-    padding-inline: var(--size-3);
-  }
-
   .title h1 {
     font-size: var(--font-size-6);
     margin-block: var(--size-3);

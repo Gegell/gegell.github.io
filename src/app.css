@@ -3,7 +3,7 @@
 
 html {
     /* font */
-    --font-sans: 'DM Sans', sans-serif;
+    --font-sans: 'DM Sans Variable', 'Calibri', sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
 
     /* dark */
@@ -115,6 +115,12 @@ html {
 
 img {
     border-radius: var(--radius-3);
+}
+
+article {
+  max-width: 90ch;
+  width: var(--size-content-3);
+  margin-inline: auto;
 }
 
 .prose {
