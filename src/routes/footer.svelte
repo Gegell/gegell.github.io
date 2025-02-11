@@ -1,7 +1,11 @@
 <script lang="ts">
   import * as config from '$lib/config';
 
-  export let startYear = 2024;
+  interface Props {
+    startYear?: number;
+  }
+
+  let { startYear = 2024 }: Props = $props();
   let year = new Date().getFullYear();
 </script>
 

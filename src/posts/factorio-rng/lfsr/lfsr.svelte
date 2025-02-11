@@ -5,7 +5,7 @@
 	import Xor from './xor.svelte';
 	import Bit from './bit.svelte';
 	
-  let lfsr = 0b1000; // Initial state
+  let lfsr = $state(0b1000); // Initial state
   const tapMask = 0b110010; // Tap at the second bit
   const bitCount = highestBit(tapMask) + 1;
 
@@ -27,25 +27,15 @@
 
   function step() {
     shiftLFSR();
-		updateVisual();
-  }
-
-  function updateVisual() {
-    const bits = [];
-    for (let i = bitCount - 1; i >= 0; i--) {
-			// Display MSB to LSB
-      bits.push((lfsr >> i) & 1);
-    }
-    lfsrBits = bits;
   }
 
 	function col(i: number) {
 		return i ? 'var(--color-lit)' : 'var(--color-dim)';
 	}
 
-  let lfsrBits = [0, 0, 0, 0, 0, 0];
-	let bitEls: SVGGraphicsElement[] = [];
-	let xorEls: SVGGraphicsElement[] = [];
+  let lfsrBits = $derived([...Array(bitCount).keys()].map(i => (lfsr >> (bitCount - i - 1) & 1)));
+	let bitEls: SVGGraphicsElement[] = $state([]);
+	let xorEls: SVGGraphicsElement[] = $state([]);
 </script>
 
 <div class="container">
@@ -103,36 +93,10 @@
 		--color-lit: #fff;
 		--color-dim: #0f0f0f;
 	}
-	
-	.xor,
-  .bit {
-    width: 30px;
-    height: 30px;
-    border: 1px solid black;
-		border-radius: 4px;
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    margin: 0 20px;
-    position: relative;
-		transition: 100ms;
-		background-color: var(--color-dim);
-		user-select: none;
-  }
-
-	.bit.lit {
-		background-color: var(--color-lit);
-		color: var(--color-dim);
-		box-shadow: 0 0 10px 0px var(--color-lit);
-		border-color: var(--color-lit);
-	}
-
-	.xor {
-		border-radius: 9001em;
-	}
 
 	svg {
 		width: 100%;
 		height: 100%;
+		stroke-width: 1.75;
 	}
 </style>

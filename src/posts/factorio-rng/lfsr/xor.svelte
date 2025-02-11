@@ -1,15 +1,24 @@
 <script lang="ts">
-  export let x: number;
-  export let y: number;
-  export let r: number;
-  export let stroke: string = 'black';
-  export let strokeWidth: number = 1.75;
-  export let fill: string = 'none';
-  export let ref: SVGGraphicsElement | null = null;
+	interface Props {
+		x: number;
+		y: number;
+		r: number;
+		ref?: SVGGraphicsElement;
+	}
+
+	let { x, y, r, ref = $bindable() }: Props = $props();
 </script>
 
-<g {stroke} stroke-width={strokeWidth} {fill} bind:this={ref}>
+<g bind:this={ref}>
 	<circle cx={x} cy={y} {r} />
-	<line x1={x-r} y1={y} x2={x + r} y2={y} />
-	<line x1={x} y1={y-r} x2={x} y2={y + r} />
+	<line x1={x - r} y1={y} x2={x + r} y2={y} />
+	<line x1={x} y1={y - r} x2={x} y2={y + r} />
 </g>
+
+<style>
+	g {
+		stroke-width: var(--stroke-width, 1.75);
+    fill: none;
+    stroke: var(--stroke, var(--color-dim));
+	}
+</style>

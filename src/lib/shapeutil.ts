@@ -1,3 +1,5 @@
+export type Point = [number, number];
+
 function bboxAnchorPos(angle_deg: number, bbox_w: number, bbox_h: number) {
 	// Angle to 0-4 range (repeating)
 	angle_deg /= 90;
@@ -13,7 +15,7 @@ export function center(el: SVGGraphicsElement) {
 	return [bbox.x + bbox.width / 2, bbox.y + bbox.height / 2];
 }
 
-export function anchor(angle_deg: number, el: SVGGraphicsElement) {
+export function anchor(angle_deg: number, el: SVGGraphicsElement): Point {
 	if (!el) return [0, 0];
 	const bbox = el.getBBox();
 	const [center_x, center_y] = center(el);

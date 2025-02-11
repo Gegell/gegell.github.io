@@ -3,7 +3,7 @@
 	import { base } from '$app/paths';
 	import { dateFormat } from '$lib/util';
 
-	export let data;
+	let { data } = $props();
 </script>
 
 <svelte:head>

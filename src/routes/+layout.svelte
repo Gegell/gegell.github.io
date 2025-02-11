@@ -9,14 +9,14 @@
 
 	import '../app.css';
 
-	export let data;
+	let { data, children } = $props();
 </script>
 
 <div class="layout">
 	<Header />
 	<main>
 		<PageTransition url={data.url}>
-			<slot />
+			{@render children?.()}
 		</PageTransition>
 	</main>
 	<Footer />

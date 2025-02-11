@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { RiPauseFill, RiPlayFill, RiSkipForwardFill } from 'svelte-remixicon';
 
-	let isPlaying = false;
+	let isPlaying = $state(false);
 	let interval: number | undefined;
 
 	function start() {
@@ -19,14 +19,18 @@
 		return stop;
 	});
 
-	export let tick: () => void;
+	interface Props {
+		tick: () => void;
+	}
+
+	let { tick }: Props = $props();
 </script>
 
 <div class='controls'>
-<button on:click={isPlaying ? stop : tick} class='surface-4'>
+<button onclick={isPlaying ? stop : tick} class='surface-4'>
 	<RiSkipForwardFill />
 </button>
-<button on:click={isPlaying ? stop : start} class='surface-4'>
+<button onclick={isPlaying ? stop : start} class='surface-4'>
 	{#if isPlaying}
 		<RiPauseFill />
 	{:else}

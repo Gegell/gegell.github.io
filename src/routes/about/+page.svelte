@@ -18,9 +18,10 @@ This is the about page. It's a placeholder for now.
 You can find me (for now) on:
 <ul>
 	{#each links as { name, url, icon }}
+		{@const SvelteComponent = icon}
 		<li>
 			<a href={url}>
-				<span class="remixicon"><svelte:component this={icon} size="1.1em" /></span>
+				<span class="remixicon"><SvelteComponent size="1.1em" /></span>
 				{@html name}
 			</a>
 		</li>
