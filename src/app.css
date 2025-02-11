@@ -118,8 +118,7 @@ img {
 }
 
 article {
-  max-width: 90ch;
-  width: var(--size-content-3);
+  max-width: 100ch;
   margin-inline: auto;
 }
 
@@ -138,7 +137,7 @@ article {
     p,
     li,
     blockquote {
-        max-inline-size: var(--size-content-3);
+        max-width: inherit;
     }
 
     hr {
