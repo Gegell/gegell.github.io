@@ -23,10 +23,10 @@
 </script>
 
 <div class='controls'>
-<button on:click={isPlaying ? stop : tick}>
+<button on:click={isPlaying ? stop : tick} class='surface-4'>
 	<RiSkipForwardFill />
 </button>
-<button on:click={isPlaying ? stop : start}>
+<button on:click={isPlaying ? stop : start} class='surface-4'>
 	{#if isPlaying}
 		<RiPauseFill />
 	{:else}
@@ -43,11 +43,8 @@
 }
 
 button {
-	background: none;
-	border: none;
-	cursor: pointer;
 	box-shadow: unset;
-	border: 1px solid var(--brand);
-	color: var(--brand);
+	border: none;
+	box-shadow: 0 0 10px -5px var(--stone-10) inset;
 }
 </style>

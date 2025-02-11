@@ -100,6 +100,9 @@ which we can then tackle one by one:
 
 ### Reversal process
 <!-- Ghidra + Research (factorio forum: Cube 8 years ago) -->
+First things first, when starting a new project, it is always a good idea to
+do some research first. So I started by looking up the Factorio forums,
+and coincidentally found a post by a user named *Cube* from 8 years ago.
 
 ### The Implementation
 

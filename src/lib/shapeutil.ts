@@ -8,17 +8,15 @@ function bboxAnchorPos(angle_deg: number, bbox_w: number, bbox_h: number) {
 	return [truncTri(angle_deg + 1) * bbox_w, truncTri(angle_deg) * bbox_h];
 }
 
-export function center(el: HTMLElement) {
-	const center_x = el.offsetLeft + el.offsetWidth / 2;
-	const center_y = el.offsetTop + el.offsetHeight / 2;
-	return [center_x, center_y];
+export function center(el: SVGGraphicsElement) {
+	const bbox = el.getBBox();
+	return [bbox.x + bbox.width / 2, bbox.y + bbox.height / 2];
 }
 
-export function anchor(angle_deg: number, el: HTMLElement) {
-	if (!el) {
-		return [0, 0];
-	}
+export function anchor(angle_deg: number, el: SVGGraphicsElement) {
+	if (!el) return [0, 0];
+	const bbox = el.getBBox();
 	const [center_x, center_y] = center(el);
-	const [box_x, box_y] = bboxAnchorPos(angle_deg, el.offsetWidth, el.offsetHeight);
+	const [box_x, box_y] = bboxAnchorPos(angle_deg, bbox.width, bbox.height);
 	return [center_x + box_x, center_y + box_y];
 }

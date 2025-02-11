@@ -3,11 +3,13 @@
 
 	let p1 = [0, 0];
 	let p2 = [0, 0];
-	export let from, to;
+	export let from: SVGGraphicsElement, to: SVGGraphicsElement;
 	export let color = "black";
 
 	$: {
 		if (from && to) {
+			// HACK: This position may get out of sync if the parent element changes size/position
+			// as the HTML element properties are not reactive
 			const fromCenter = center(from);
 			const toCenter = center(to);
 			
@@ -23,5 +25,5 @@
 </script>
 
 {#if from && to}
-<path stroke={color} stroke-width="1.75" fill="none" d="M {p1} L {p2}" marker-end="url(#arrow)"/>
+	<path stroke={color} stroke-width="1.75" fill="none" d="M {p1} L {p2}" marker-end="url(#arrow)" />
 {/if}
