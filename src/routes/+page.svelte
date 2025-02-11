@@ -23,6 +23,11 @@
 </section>
 
 <style>
+	section {
+		max-width: 100ch;
+		margin-inline: auto;
+	}
+
 	.posts {
 		list-style: none;
 		padding: 0;
