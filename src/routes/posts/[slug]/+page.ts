@@ -13,3 +13,5 @@ export async function load({ params }) {
 		return error(404, `Could not find post ${params.slug}`);
 	}
 }
+
+export const prerender = true;
