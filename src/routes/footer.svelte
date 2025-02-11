@@ -1,9 +1,12 @@
 <script lang="ts">
   import * as config from '$lib/config';
+
+  export let startYear = 2024;
+  let year = new Date().getFullYear();
 </script>
 
 <footer>
-  <p>{config.title} &copy; 2024 - {new Date().getFullYear()}</p>
+  <p>{config.title} &copy; {startYear}{year > startYear ? ` - ${year}` : ''}</p>
 </footer>
 
 <style>
@@ -14,5 +17,6 @@
 
   p {
     color: var(--text-2);
+    font-size: var(--size-3);
   }
 </style>
