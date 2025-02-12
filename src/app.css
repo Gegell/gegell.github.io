@@ -97,7 +97,6 @@ html {
     .shiki span {
         color: var(--shiki-light);
         background-color: var(--shiki-light-bg);
-        box-shadow: var(--shadow-2);
     }
 }
 
@@ -118,19 +117,24 @@ img {
 }
 
 article {
-  max-width: 100ch;
-  margin-inline: auto;
+    max-width: 100ch;
+    margin-inline: auto;
 }
 
 .prose {
     text-align: justify;
 
-    h2, h3, h4, h5, h6 {
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
         margin-top: var(--size-5);
         margin-bottom: var(--size-2);
     }
 
-    p:not(:first-child), li {
+    p:not(:first-child),
+    li {
         margin-top: var(--font-size-1);
     }
 
