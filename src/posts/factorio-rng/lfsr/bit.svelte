@@ -13,7 +13,7 @@
 </script>
 
 <g bind:this={ref}>
-	<rect x={x - r} y={y - r} width={2 * r} height={2 * r} fill={color} stroke={color} />
+	<rect x={x - r} y={y - r} width={2 * r} height={2 * r} fill={color} stroke={color} rx={3} />
 	<text {x} {y} font-size={r} class:active={set}>
 		{set ? '1' : '0'}
 	</text>
@@ -21,19 +21,19 @@
 
 <style>
 	rect {
-		fill-opacity: 0.5;
+		fill-opacity: 0.4;
 		stroke-width: 1.75;
 	}
 
 	text {
 		font-family: var(--font-mono);
-		dominant-baseline: middle;
+		dominant-baseline: central;
 		text-anchor: middle;
-		fill: var(--color-lit);
+		fill: var(--color-dim);
 		user-select: none;
 	}
 
 	text.active {
-		fill: var(--color-dim);
+		fill: var(--color-lit);
 	}
 </style>

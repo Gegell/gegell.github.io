@@ -90,8 +90,8 @@
 	.container {
 		position: relative;
 		height: 5em;
-		--color-lit: #fff;
-		--color-dim: #0f0f0f;
+		--color-lit: var(--brand);
+		--color-dim: var(--text-1);
 	}
 
 	svg {
