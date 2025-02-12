@@ -26,7 +26,7 @@
 <style>
 	nav {
 		padding-block: var(--size-7);
-		gap: var(--size-7);
+		gap: var(--size-4);
 	}
 
 	.top-row {

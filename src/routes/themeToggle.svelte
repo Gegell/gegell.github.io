@@ -1,44 +1,47 @@
 <script lang="ts">
-	import { fly } from 'svelte/transition';
 	import { RiSunFill, RiMoonClearFill } from 'svelte-remixicon';
 	import { theme, toggleTheme } from '$lib/theme';
 </script>
 
-<button onclick={toggleTheme} aria-label="Toggle theme">
-	{#if $theme === 'dark'}
-		<div in:fly={{ y: 10 }}>
-			<RiSunFill />
-			<span>Light</span>
-		</div>
-	{:else}
-		<div in:fly={{ y: -10 }}>
+<button
+	onclick={toggleTheme}
+	role="switch"
+	aria-checked={$theme === 'dark'}
+	aria-label="Toggle theme"
+>
+	<div>
+		{#if $theme === 'dark'}
 			<RiMoonClearFill />
-			<span>Dark</span>
-		</div>
-	{/if}
+		{:else}
+			<RiSunFill />
+		{/if}
+	</div>
 </button>
 
 <style>
 	button {
-		display: flex;
-		align-items: center;
-		gap: var(--size-2);
-		background: none;
+		background: var(--surface-4);
 		border: none;
 		cursor: pointer;
 		box-shadow: none;
-		padding-inline: 0;
+		width: var(--size-8);
+		border-radius: 2em;
+		position: relative;
+		height: var(--size-5);
+	}
+
+	button[aria-checked='true'] div {
+		transform: translateX(1em);
 	}
 
 	button div {
-		display: flex;
-		align-items: center;
-		gap: var(--size-1);
-	}
-
-	button span {
+		display: inline-block;
 		font-size: var(--size-3);
 		color: var(--text-2);
 		font-weight: 300;
+		left: var(--size-2);
+		position: absolute;
+		transform: rotate(-90deg);
+		transition: transform 0.4s var(--ease-elastic-in-out-2);
 	}
 </style>
