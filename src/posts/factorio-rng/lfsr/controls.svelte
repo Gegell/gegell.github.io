@@ -2,17 +2,27 @@
 	import { onMount } from 'svelte';
 	import { RiPauseFill, RiPlayFill, RiResetLeftFill, RiSkipForwardFill } from 'svelte-remixicon';
 
-	let isPlaying = $state(false);
+	const speed_multipliers = [1, 2, 10];
+	const base_speed = 500;
+	let selected_mult: number = $state(0);
+	let last_selected: number = 0;
+	let isPlaying = $derived(selected_mult > 0);
+
 	let interval: number | undefined;
+	$effect(() => {
+		clearInterval(interval);
+		if (selected_mult) {
+			last_selected = selected_mult;
+			interval = setInterval(tick, base_speed / selected_mult);
+		}
+	});
 
 	function start() {
-		isPlaying = true;
-		interval = setInterval(tick, 1000);
+		selected_mult = selected_mult || last_selected || 1;
 	}
 
 	function stop() {
-		isPlaying = false;
-		clearInterval(interval);
+		selected_mult = 0;
 	}
 
 	onMount(() => {
@@ -28,6 +38,7 @@
 </script>
 
 <div class="controls">
+	<!-- Reset -->
 	{#if reset}
 		<button
 			onclick={() => {
@@ -39,9 +50,13 @@
 			<RiResetLeftFill />
 		</button>
 	{/if}
+
+	<!-- Single Step -->
 	<button onclick={isPlaying ? stop : tick} class="surface-4">
 		<RiSkipForwardFill />
 	</button>
+
+	<!-- Play / Pause -->
 	<button onclick={isPlaying ? stop : start} class="surface-4">
 		{#if isPlaying}
 			<RiPauseFill />
@@ -49,6 +64,14 @@
 			<RiPlayFill />
 		{/if}
 	</button>
+
+	<!-- Speeds -->
+	{#each speed_multipliers as mult}
+		<label>
+			<input type="radio" name="speed" value={mult} bind:group={selected_mult} />
+			<span>{mult}x</span>
+		</label>
+	{/each}
 </div>
 
 <style>
@@ -66,5 +89,25 @@
 		box-shadow: unset;
 		border: none;
 		box-shadow: 0 0 10px -5px var(--stone-10) inset;
+	}
+
+	input[type='radio'] {
+		display: none;
+	}
+
+	label {
+		cursor: pointer;
+		height: fit-content;
+		align-self: center;
+	}
+
+	label > span {
+		color: var(--text-1);
+		opacity: 0.5;
+	}
+
+	label > :checked + span {
+		opacity: 1;
+		text-shadow: 0 0 5px var(--text-1);
 	}
 </style>
