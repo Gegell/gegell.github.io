@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { RiPauseFill, RiPlayFill, RiResetLeftFill, RiSkipForwardFill } from 'svelte-remixicon';
 
-	const speed_multipliers = [1, 2, 10];
+	const speed_multipliers = [1, 2, 5];
 	const base_speed = 500;
 	let selected_mult: number = $state(0);
 	let last_selected: number = 0;
