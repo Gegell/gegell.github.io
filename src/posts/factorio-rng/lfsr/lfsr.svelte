@@ -4,10 +4,7 @@
 	import { anchor } from '$lib/shapeutil';
 	import Xor from './xor.svelte';
 	import Bit from './bit.svelte';
-	
-  let lfsr = $state(0b1000); // Initial state
-  const tapMask = 0b110000; // Tap at the second bit
-  const bitCount = highestBit(tapMask) + 1;
+	import History from './history.svelte';
 
 	function highestBit(n: number) {
 		return Math.floor(Math.log2(n));
@@ -27,6 +24,7 @@
 
   function step() {
     shiftLFSR();
+		historyEl.push(lfsr & 1);
   }
 
 	function toggleBit(i: number) {
@@ -40,6 +38,7 @@
   let lfsrBits = $derived([...Array(bitCount).keys()].map(i => (lfsr >> (bitCount - i - 1) & 1)));
 	let bitEls: SVGGraphicsElement[] = $state([]);
 	let xorEls: SVGGraphicsElement[] = $state([]);
+	let historyEl: History;
 </script>
 
 <div class="container">
@@ -80,12 +79,16 @@
 			{/each}
 		</g>
 
+		<!-- LFSR bits + inter mitten XORs -->
 		{#each lfsrBits as bit, i}
 			<Bit x={i * 80} y={15} r={15} set={!!bit} onclick={() => toggleBit(i)} bind:ref={bitEls[i]} />
 			{#if i < lfsrBits.length - 1 && isTap(i+1)}
 				<Xor x={i * 80 + 40} y={15} r={10} bind:ref={xorEls[i]} />
 			{/if}
 		{/each}
+
+		<!-- History of output bits -->
+		<History bind:this={historyEl} x={bitCount * 80} y={15} />
 	</svg>
 </div>
 <Controls tick={step} />
