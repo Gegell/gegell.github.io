@@ -6,7 +6,7 @@
 	import Bit from './bit.svelte';
 	
   let lfsr = $state(0b1000); // Initial state
-  const tapMask = 0b110010; // Tap at the second bit
+  const tapMask = 0b110000; // Tap at the second bit
   const bitCount = highestBit(tapMask) + 1;
 
 	function highestBit(n: number) {
@@ -28,6 +28,10 @@
   function step() {
     shiftLFSR();
   }
+
+	function toggleBit(i: number) {
+		lfsr ^= 1 << (bitCount - i - 1);
+	}
 
 	function col(i: number) {
 		return i ? 'var(--color-lit)' : 'var(--color-dim)';
@@ -77,7 +81,7 @@
 		</g>
 
 		{#each lfsrBits as bit, i}
-			<Bit x={i * 80} y={15} r={15} set={!!bit} bind:ref={bitEls[i]} />
+			<Bit x={i * 80} y={15} r={15} set={!!bit} onclick={() => toggleBit(i)} bind:ref={bitEls[i]} />
 			{#if i < lfsrBits.length - 1 && isTap(i+1)}
 				<Xor x={i * 80 + 40} y={15} r={10} bind:ref={xorEls[i]} />
 			{/if}
