@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { RiPauseFill, RiPlayFill, RiSkipForwardFill } from 'svelte-remixicon';
+	import { RiPauseFill, RiPlayFill, RiResetLeftFill, RiSkipForwardFill } from 'svelte-remixicon';
 
 	let isPlaying = $state(false);
 	let interval: number | undefined;
@@ -21,12 +21,18 @@
 
 	interface Props {
 		tick: () => void;
+		reset?: () => void;
 	}
 
-	let { tick }: Props = $props();
+	let { tick, reset }: Props = $props();
 </script>
 
 <div class='controls'>
+{#if reset}
+<button onclick={() => {stop(); reset();}} class='surface-4 reset'>
+	<RiResetLeftFill />
+</button>
+{/if}
 <button onclick={isPlaying ? stop : tick} class='surface-4'>
 	<RiSkipForwardFill />
 </button>
@@ -44,6 +50,10 @@
 	display: flex;
 	justify-content: center;
 	gap: var(--size-relative-2);
+}
+
+:global(svg.ri-reset-left-fill) {
+	transform: scale(.9);
 }
 
 button {

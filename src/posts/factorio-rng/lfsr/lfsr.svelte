@@ -36,6 +36,11 @@
 		historyEl.push(lfsr & 1);
   }
 
+	function reset() {
+		lfsr = 0b1000;
+		historyEl.reset();
+	}
+
 	function toggleBit(i: number) {
 		lfsr ^= 1 << (bitCount - i - 1);
 	}
@@ -100,7 +105,7 @@
 		<History bind:this={historyEl} x={bitCount * 80} y={15} />
 	</svg>
 </div>
-<Controls tick={step} />
+<Controls tick={step} {reset}/>
 
 <style>
 	.container {
