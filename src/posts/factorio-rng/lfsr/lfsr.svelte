@@ -1,23 +1,23 @@
 <script lang="ts">
-	import Arrow from './arrow.svelte';
-	import Controls from './controls.svelte';
 	import { anchor } from '$lib/shapeutil';
-	import Xor from './xor.svelte';
-	import Bit from './bit.svelte';
-	import History from './history.svelte';
+	import { onMount } from 'svelte';
+	import { Arrow, Xor, Bit, History, Controls } from './components';
 
 	interface Props {
-		state?: number;
+		initialState?: number;
 		tapMask?: number;
 	}
 
-	let { state: lfsr = 0b1000, tapMask = 0b110000 }: Props = $props();
-	
+	let { initialState = 1, tapMask = 0b110000 }: Props = $props();
+
 	function highestBit(n: number) {
 		return Math.floor(Math.log2(n));
 	}
 
-	const bitCount = $derived(highestBit(tapMask) + 1);	
+	let bitCount = $derived(highestBit(tapMask) + 1);
+	let lfsr = $state(initialState);
+
+	onMount(reset);
 
   function shiftLFSR() {
     const feedback = lfsr & 1; // Feedback is the last bit
@@ -37,8 +37,9 @@
   }
 
 	function reset() {
-		lfsr = 0b1000;
+		lfsr = initialState;
 		historyEl.reset();
+		historyEl.push(lfsr & 1);
 	}
 
 	function toggleBit(i: number) {
