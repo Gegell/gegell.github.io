@@ -6,9 +6,18 @@
 	import Bit from './bit.svelte';
 	import History from './history.svelte';
 
+	interface Props {
+		state?: number;
+		tapMask?: number;
+	}
+
+	let { state: lfsr = 0b1000, tapMask = 0b110000 }: Props = $props();
+	
 	function highestBit(n: number) {
 		return Math.floor(Math.log2(n));
 	}
+
+	const bitCount = $derived(highestBit(tapMask) + 1);	
 
   function shiftLFSR() {
     const feedback = lfsr & 1; // Feedback is the last bit
