@@ -27,38 +27,44 @@
 	let { tick, reset }: Props = $props();
 </script>
 
-<div class='controls'>
-{#if reset}
-<button onclick={() => {stop(); reset();}} class='surface-4 reset'>
-	<RiResetLeftFill />
-</button>
-{/if}
-<button onclick={isPlaying ? stop : tick} class='surface-4'>
-	<RiSkipForwardFill />
-</button>
-<button onclick={isPlaying ? stop : start} class='surface-4'>
-	{#if isPlaying}
-		<RiPauseFill />
-	{:else}
-		<RiPlayFill />
+<div class="controls">
+	{#if reset}
+		<button
+			onclick={() => {
+				stop();
+				reset();
+			}}
+			class="surface-4 reset"
+		>
+			<RiResetLeftFill />
+		</button>
 	{/if}
-</button>
+	<button onclick={isPlaying ? stop : tick} class="surface-4">
+		<RiSkipForwardFill />
+	</button>
+	<button onclick={isPlaying ? stop : start} class="surface-4">
+		{#if isPlaying}
+			<RiPauseFill />
+		{:else}
+			<RiPlayFill />
+		{/if}
+	</button>
 </div>
 
 <style>
-.controls {
-	display: flex;
-	justify-content: center;
-	gap: var(--size-relative-2);
-}
+	.controls {
+		display: flex;
+		justify-content: center;
+		gap: var(--size-relative-2);
+	}
 
-:global(svg.ri-reset-left-fill) {
-	transform: scale(.9);
-}
+	:global(svg.ri-reset-left-fill) {
+		transform: scale(0.9);
+	}
 
-button {
-	box-shadow: unset;
-	border: none;
-	box-shadow: 0 0 10px -5px var(--stone-10) inset;
-}
+	button {
+		box-shadow: unset;
+		border: none;
+		box-shadow: 0 0 10px -5px var(--stone-10) inset;
+	}
 </style>

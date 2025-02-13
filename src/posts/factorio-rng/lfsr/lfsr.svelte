@@ -19,22 +19,22 @@
 
 	onMount(reset);
 
-  function shiftLFSR() {
-    const feedback = lfsr & 1; // Feedback is the last bit
-    lfsr >>>= 1; // Right shift
-    if (feedback) {
-      lfsr ^= tapMask; // XOR feedback with tap bits
-    }
-  }
+	function shiftLFSR() {
+		const feedback = lfsr & 1; // Feedback is the last bit
+		lfsr >>>= 1; // Right shift
+		if (feedback) {
+			lfsr ^= tapMask; // XOR feedback with tap bits
+		}
+	}
 
 	function isTap(i: number) {
 		return (tapMask >> (bitCount - i - 1)) & 1;
 	}
 
-  function step() {
-    shiftLFSR();
+	function step() {
+		shiftLFSR();
 		historyEl.push(lfsr & 1);
-  }
+	}
 
 	function reset() {
 		lfsr = initialState;
@@ -50,14 +50,14 @@
 		return i ? 'var(--color-lit)' : 'var(--color-dim)';
 	}
 
-  let lfsrBits = $derived([...Array(bitCount).keys()].map(i => (lfsr >> (bitCount - i - 1) & 1)));
+	let lfsrBits = $derived([...Array(bitCount).keys()].map((i) => (lfsr >> (bitCount - i - 1)) & 1));
 	let bitEls: SVGGraphicsElement[] = $state([]);
 	let xorEls: SVGGraphicsElement[] = $state([]);
 	let historyEl: History;
 </script>
 
 <div class="container">
-	<svg viewBox="-2 -2 {(bitCount-.5) * 80 + 4} 84">
+	<svg viewBox="-2 -2 {(bitCount - 0.5) * 80 + 4} 84">
 		<defs>
 			<marker id="circle" markerWidth="8" markerHeight="8" refX="5" refY="5">
 				<circle cx="5" cy="5" r="2" fill="context-stroke" />
@@ -68,26 +68,26 @@
 		</defs>
 		{#each bitEls as el, i}
 			{#if i < bitEls.length - 1}
-				{#if isTap(i+1)}
+				{#if isTap(i + 1)}
 					<Arrow from={bitEls[i]} to={xorEls[i]} color={col(lfsrBits[i])} />
-					<Arrow from={xorEls[i]} to={bitEls[i+1]} color={col(lfsrBits[i] ^ (lfsr & 1))} />
+					<Arrow from={xorEls[i]} to={bitEls[i + 1]} color={col(lfsrBits[i] ^ (lfsr & 1))} />
 				{:else}
-					<Arrow from={bitEls[i]} to={bitEls[i+1]} color={col(lfsrBits[i])} />
+					<Arrow from={bitEls[i]} to={bitEls[i + 1]} color={col(lfsrBits[i])} />
 				{/if}
 			{/if}
 		{/each}
 		<g
-			stroke={col(lfsrBits[lfsrBits.length-1])}
+			stroke={col(lfsrBits[lfsrBits.length - 1])}
 			fill="none"
 			stroke-width="1.75"
 			marker-end="url(#arrow)"
 		>
 			<path
-				d="M {anchor(90, bitEls[bitEls.length-1])} h 20 V 60 H {anchor(180, bitEls[0]).join('V')}"
+				d="M {anchor(90, bitEls[bitEls.length - 1])} h 20 V 60 H {anchor(180, bitEls[0]).join('V')}"
 			/>
-			<path d="M {anchor(90, bitEls[bitEls.length-1])} h 60" />
+			<path d="M {anchor(90, bitEls[bitEls.length - 1])} h 60" />
 			{#each xorEls as el, i}
-				{#if isTap(i+1)}
+				{#if isTap(i + 1)}
 					{@const a = anchor(180, el)}
 					<path d="M {a[0]} 60 V {a[1]}" />
 				{/if}
@@ -97,7 +97,7 @@
 		<!-- LFSR bits + inter mitten XORs -->
 		{#each lfsrBits as bit, i}
 			<Bit x={i * 80} y={15} r={15} set={!!bit} onclick={() => toggleBit(i)} bind:ref={bitEls[i]} />
-			{#if i < lfsrBits.length - 1 && isTap(i+1)}
+			{#if i < lfsrBits.length - 1 && isTap(i + 1)}
 				<Xor x={i * 80 + 40} y={15} r={10} bind:ref={xorEls[i]} />
 			{/if}
 		{/each}
@@ -106,7 +106,7 @@
 		<History bind:this={historyEl} x={bitCount * 80} y={15} />
 	</svg>
 </div>
-<Controls tick={step} {reset}/>
+<Controls tick={step} {reset} />
 
 <style>
 	.container {

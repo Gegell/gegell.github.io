@@ -18,8 +18,8 @@
 <style>
 	g {
 		stroke-width: var(--stroke-width, 1.75);
-    fill: var(--color-dim);
-    fill-opacity: 0.4;
-    stroke: var(--stroke, var(--color-dim));
+		fill: var(--color-dim);
+		fill-opacity: 0.4;
+		stroke: var(--stroke, var(--color-dim));
 	}
 </style>

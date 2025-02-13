@@ -17,10 +17,10 @@
 		}
 	}
 
-  export function reset() {
-    history = [];
-    mutations = 0;
-  }
+	export function reset() {
+		history = [];
+		mutations = 0;
+	}
 </script>
 
 <text {x} {y}>
