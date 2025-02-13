@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { fly } from 'svelte/transition';
+
 	interface Props {
 		x: number;
 		y: number;
@@ -17,9 +19,11 @@
 <!-- svelte-ignore a11y_interactive_supports_focus -->
 <g bind:this={ref} {onclick} role="button" cursor="pointer">
 	<rect x={x - r} y={y - r} width={2 * r} height={2 * r} fill={color} stroke={color} rx={3} />
-	<text {x} {y} font-size={r} class:active={set}>
-		{set ? '1' : '0'}
-	</text>
+	{#if set}
+		<text {x} {y} font-size={r} class="active" transition:fly={{ y: -r, duration: 50 }}>1</text>
+	{:else}
+		<text {x} {y} font-size={r} transition:fly={{y: r, duration: 50}}>0</text>
+	{/if}
 </g>
 
 <style>
