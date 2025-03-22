@@ -8,7 +8,7 @@ import { createHighlighter } from 'shiki'
 
 const highlighter = await createHighlighter({
 	themes: ['ayu-dark', 'min-light'],
-	langs: ['python']
+	langs: ['python', 'cpp']
 });
 
 /** @type {import('mdsvex').MdsvexOptions} */
