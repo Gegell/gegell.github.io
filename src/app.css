@@ -126,6 +126,7 @@ article {
 
 .prose {
     text-align: justify;
+    margin-bottom: var(--size-12);
 
     h2,
     h3,
@@ -136,9 +137,19 @@ article {
         margin-bottom: var(--size-2);
     }
 
-    p:not(:first-child),
-    li {
+    & > *:not(:first-child),
+    p:not(:first-child) {
         margin-top: var(--font-size-1);
+    }
+
+    li {
+        margin-top: var(--font-size-0);
+    }
+
+    table,
+    figure,
+    img {
+        margin-inline: auto;
     }
 
     p,
