@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { RiGithubFill, RiMailSendFill } from 'svelte-remixicon';
+	import { RiBlueskyFill, RiGithubFill, RiMailSendFill } from 'svelte-remixicon';
 
   // Use atob to decode email address from base64 
   // -> Don't store email addresses in plain text to avoid crawlers
@@ -7,7 +7,8 @@
 
 	const links = [
 		{ name: 'Gegell', url: 'https://www.github.com/gegell', icon: RiGithubFill },
-		{ name: mail, url: `mailto:${mail}`, icon: RiMailSendFill }
+		// { name: mail, url: `mailto:${mail}`, icon: RiMailSendFill },
+		{ name: '@gegellibu.bsky.social', url: 'https://bsky.app/profile/gegellibu.bsky.social', icon: RiBlueskyFill}
 	];
 </script>
 
@@ -43,6 +44,6 @@ You can find me (for now) on:
 
 	.remixicon {
 		display: inline-block;
-		vertical-align: text-top;
+		vertical-align: middle;
 	}
 </style>
