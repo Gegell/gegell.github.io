@@ -212,6 +212,11 @@ article {
 
     .katex-display {
         overflow: auto hidden;
+
+        .katex {
+            /* Fixes showing scrolling bar too early on the longest equation on the page. */
+            width: calc(100% - 2px);
+        }
     }
 }
 
