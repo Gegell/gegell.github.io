@@ -126,7 +126,11 @@ article {
 }
 
 .prose {
-    text-align: justify;
+    text-align: left;
+    @media (min-width: 768px) {
+        text-align: justify;
+    }
+
     margin-bottom: var(--size-12);
 
     h2,
@@ -136,7 +140,6 @@ article {
     h6 {
         margin-top: var(--size-5);
         margin-bottom: var(--size-2);
-        text-justify: none;
     }
 
     &>*:not(:first-child),
