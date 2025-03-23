@@ -46,7 +46,18 @@ const config = {
 			fallback: null
 		}),
 		paths: {
-			base: process.env.NODE_ENV === 'production' ? '/gegell-blog' : '',
+			base: process.argv.includes('dev') ? '' : process.env.BASE_PATH
+		},
+		prerender: {
+			handleHttpError: ({ path, referrer, message }) => {
+				// Ignore 404s
+                if (message.includes('404')) {
+                    return;
+                }
+
+                // Log other errors
+                console.error('Failed to prerender', { path, referrer, message });
+			},
 		}
 	}
 };

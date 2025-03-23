@@ -20,6 +20,8 @@ async function getPosts() {
 	return posts;
 }
 
+export const prerender = true;
+
 export async function GET() {
 	const posts = await getPosts();
 	return json(posts);
