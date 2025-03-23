@@ -224,6 +224,11 @@ article {
     }
 }
 
+.math-inline > .katex {
+    /* KaTeX default scales it up to 1.21em which looks out of place inline. */
+    font-size: 1em;
+}   
+
 .surface-1 {
     background-color: var(--surface-1);
     color: var(--text-2);
