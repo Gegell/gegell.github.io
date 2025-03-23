@@ -169,7 +169,9 @@ registers change are computed in the exact same fashion. In this instance I've
 used `sympy` as this would've been a tedious number of equivalence checks by
 hand (3 * 32 = 96). the code responsible for proving this equivalence can be
 found [here]().
-<!-- TODO: add link to my code which proves equivalence -->
+> [!todo]
+> add link to my code which proves equivalence
+
 
 Sweet! So we now know that the RNG state is indeed just given by a linear
 combination of the 3 underlying LFSRs. This was a *very* neat thing to see, as
@@ -188,7 +190,8 @@ register to describe a number $\in [0, 2^n - 1]$ but rather actually as just the
 bits joined together. As such we will operate on these variables mainly using
 bitwise operations, especially so the bitwise XOR $\oplus$
 
-<!-- TODO insert the svelte LFSR component here with no arrows between the individual bits, just being able to toggle the bits individually. -->
+> [!todo]
+> insert the svelte LFSR component here with no arrows between the individual bits, just being able to toggle the bits individually.
 
 | $\oplus$ | 0   | 1   |
 | -------- | --- | --- |
@@ -205,7 +208,9 @@ Extending our previously defined register to a *shift register* is simple enough
 To shift our bits around we just take each higher bit and move it 1 position down,
 dropping the lowest bit.
 
-<!-- TODO insert the svelte LFSR component here with no feedback connections, but the shift downward arrows, step, animate & reset buttons -->
+> [!todo]
+> insert the svelte LFSR component here with no feedback connections, but the shift downward arrows, step, animate & reset buttons
+
 
 Well. . . This is boring! We pretty quickly converge always the same value, 
 that is the 0 state. This does not seem random at all. To keep our shift register
@@ -215,7 +220,9 @@ first bit, as there we do not have a preceding bit from which we can obtain (new
 information, while we discard information in the last. If we do this now we
 basically implemented the *bit roll* operation:
 
-<!-- TODO insert the svelte LFSR component here with feedback connection to the first bit from the last bit, step, animate & reset button -->
+> [!todo]
+> insert the svelte LFSR component here with feedback connection to the first bit from the last bit, step, animate & reset button
+
 
 Hmmm. . . At least we no longer always arrive at an empty register, but the
 sequence when the last bit lights up is very predictable. This is due to the
@@ -225,7 +232,9 @@ pretty quickly spot the pattern produced by our current *feedback shift register
 To combat this we insert some *linear feedback*, by adding the feedback not
 only to the first bit, but also some intermediate bits:
 
-<!-- TODO insert the svelte LFSR component here with full feedback connections to the first & second bit, for the 4 bit LFSR, with step, animate & reset button -->
+> [!todo]
+> insert the svelte LFSR component here with full feedback connections to the first & second bit, for the 4 bit LFSR, with step, animate & reset button
+
 
 Unlike the last steps it might not be immediately obvious why this step has the
 name that it has. The naming comes from the fact that the XOR $\oplus$ operation
@@ -245,11 +254,15 @@ we figure out what state we started with? To figure out how we can do this let's
 substitute in variables $x_i$ for the bits instead of using concrete values 0 / 1
 and track how the states of the corresponding bits change:
 
-<!-- TODO insert LFSR from above using variables here, best also with a list of
+> [!todo]
+> insert LFSR from above using variables here, best also with a list of
 equations which get generated for the last bit for example. This would allow me
-to show that we can insert any sequence of values there to obtain an initial state. -->
+to show that we can insert any sequence of values there to obtain an initial state.
 
-<!-- TODO this part reeeeally needs a rewrite, it does not flow well -> why the sudden *formal* introduction of the vector spaces? Is it really necessary? -->
+
+> [!todo]
+> this part reeeeally needs a rewrite, it does not flow well -> why the sudden *formal* introduction of the vector spaces? Is it really necessary?
+
 Now, if you had an introductory course on linear algebra you also likely saw the
 formal definition of what a vector space. It is usually defined over a *field*
 $F$ of scalars and a set $V$ of vectors along with the scalar multiplication
@@ -437,7 +450,9 @@ There are 2 ways to tackle this:
    to our *Entropy Generators* which should lie adjacent to each other in the
    update loop, it will update one after the other, without any outside sources
    generating interfering calls to the RNG.
-<!--  TODO fix the comment on update order, does not seem to directly work like this  -->
+> [!todo]
+> fix the comment on update order, does not seem to directly work like this 
+
 
 ### Full result width
 For our *Entropy Generators* we will use crafting recipes which have some
@@ -495,7 +510,9 @@ $$
 $$
 This means we can expect a total of 0.098 bit each successful crafting cycle! In fact, what we just calculated is a discretized version of the [Shannon Entropy](https://en.wikipedia.org/wiki/Entropy_(information_theory)) as if we observe the pattern a bit longer we might notice that the number of bits obtained in each positive case (i.e. where the probability is 0.7%) is $\lfloor-\log_2(p)\rfloor$ where $p$ is the probability of each event occurring. Similarly the same holds for $p > 0.5$ as there the result is just 0 bits observed. Thus we have a measure which we can apply to each recipe in the game to find the recipe with the most information per craft.
 
-<!--  TODO insert the table here which shows all the recipe entropy values.  -->
+> [!todo]
+> insert the table here which shows all the recipe entropy values. 
+
 
 As we can see there are *waaay* better recipes to utilize for extracting information from the game. One might think that [scrap recycling](https://wiki.factorio.com/Scrap) would yield a lot of information, but is with an entropy of 2.05 only slightly above recipes like recycling [repair packs](https://wiki.factorio.com/Repair_pack) which have entropy of 2. This is due to the fact that recycling repair packs (and similar recipes with ingredient count = 4n+2) yields exactly one bit of information of the RNG output in either case, as it is a perfect 50 / 50 split on whether the item will be created or not.
 There are obviously alternative recipes such as the [oil refinery](https://wiki.factorio.com/Oil_refinery) which has an entropy of 4.5 however is also quite a bit more expensive and slower than doing repair pack recycling.
@@ -511,7 +528,9 @@ As already alluded to in [[#LFSR but backwards]] we will need to compute a matri
 The current state will be computed from *observations* made when recycling [repair packs](https://wiki.factorio.com/Repair_pack). Each recycling operation will yield exactly 2 bits of information - 1 for each item. This in turn means that we require 88/2=44 recycling operations to have enough information to fully reconstruct the state.
 Now as we are only interested in the top most bit of each observations we have our 88 observations as: 
 $$o^{(t)}, o^{(t+1)}, \dots, o^{(t+87)} \in GF(2)$$
-<!--  TODO add image of individual measurement unit  -->
+> [!todo]
+> add image of individual measurement unit 
+
 ### Figuring out the current State
 This means that we only take the first row from the linear equation defined above for computing observations from the state:
 $$
@@ -551,7 +570,9 @@ where $[T^k]_j$ is the $j$-th column of $T^k$. These columns can be stored as 32
 1. The pointwise scalar vector multiplication $s_j^{(t)}$ with all the different vectors will either include all the vectors in the corresponding $k$-th state or not, thus we can implement this via a *decider combinator* again.
 2. Now we have 32 different 32 bit values which need to be XORed together. Unlike before we cannot utilize the implicit addition here, but instead have to use more *arithmetic combinators*. I've opted to use a *binary tree* to merge 2 bits using XOR together, as this is a fast reduction algorithm for prefix sums (which this is).
 
-<!--  TODO insert image of a single LFSR skipper  -->
+> [!todo]
+> insert image of a single LFSR skipper 
+
 ## Feasibility
 Now to the important part, that you may be wondering about:
 
@@ -570,14 +591,18 @@ The long answer is still a *"No"* - but with a reason attached. The main pain po
 6 different generators, with both crafting item result creation code AND quality rolling depending on the `generalRandomGenerator` on the `Map` object. Now as you might already infer from the name of said RNG, there are also other functions which likewise utilize this generator. These include (but are not limited to):
 - **Other RNG Crafts**: Other machines, e.g. your [scrap recycling](https://wiki.factorio.com/Scrap) plant on Fulgora and your [quality rolling](https://wiki.factorio.com/Quality) all over the factory. These will all of course call the same generator.
 - **Particles Spawning**: Particles are spawned with a random velocity, which in turn means that calls to the RNG are made. Where does this happen:
-	- **Steam Turbines** <!--  TODO pretty sure they do, but double check  -->
+	- **Steam Turbines** 
+        > [!todo]
+        > pretty sure they do, but double check 
 	- **Train Smoke** - this means no trains are allowed to drive
 	- **Player Footsteps** - if you walk on dirt or sand, the player character feet will create little dust particles
 - **Fulgora Lightning**: Whenever it turns night on Fulgora there will be lightning strikes at *random positions*, [about every 10 seconds per chunk](https://wiki.factorio.com/Fulgora#Lightning).
 - **Explosions / Fire**: E.g. no biters/asteroids running into landmines or using rocket turrets nor any active artillery.
 - **Trees dropping Leaves**: As far as I can tell this only happens when the trees die (e.g. are deconstructed).
 
-<!--  TODO insert tree of the RNG calls made - would be nice to be able to analyze the code for the full tree, but the makeshift one might do the trick for now  -->
+> [!todo]
+> insert tree of the RNG calls made - would be nice to be able to analyze the code for the full tree, but the makeshift one might do the trick for now 
+
 
 Why are these additional calls problems again?
 1. As mentioned in [[#Consecutive calls]] we require the RNG calls that we record to be either directly consecutive[^1] or such that we can measure the number of calls which happened between the recorded calls. While it is certainly possible to compute some of the number of calls (e.g. track all machines doing RNG calls using circuit networks), it is not tractable to do for all sources (i.e. how would you measure the number of smoke particles emitted by the trains?)
