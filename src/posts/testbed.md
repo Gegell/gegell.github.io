@@ -18,3 +18,8 @@ import random
 random.seed(0)
 print(random.randint(0, 100))
 ```
+
+Testing a wide div with overflow -- representing a long expression using katex.
+<div style="max-width: 100%; overflow: auto;">
+<div style="width: 123%; background:red;">This is a wide div</div>
+</div>

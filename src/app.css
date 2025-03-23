@@ -136,9 +136,10 @@ article {
     h6 {
         margin-top: var(--size-5);
         margin-bottom: var(--size-2);
+        text-justify: none;
     }
 
-    & > *:not(:first-child),
+    &>*:not(:first-child),
     p:not(:first-child) {
         margin-top: var(--font-size-1);
     }
@@ -170,6 +171,13 @@ article {
     font-family: var(--font-mono);
     align-self: center;
     margin-inline: auto;
+
+    /* Fix for overflow-x: auto */
+    display: grid;
+
+    &>code {
+        overflow-x: auto;
+    }
 }
 
 .shiki,
@@ -193,6 +201,15 @@ article {
 .callout-content {
     margin: var(--font-size-1) var(--size-8);
     overflow: hidden;
+}
+
+/* Scrollable KaTeX equations, requires weird ass workaround with display: grid. */
+.math-display {
+    display: grid;
+
+    .katex-display {
+        overflow: auto hidden;
+    }
 }
 
 .surface-1 {
