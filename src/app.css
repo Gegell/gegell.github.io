@@ -1,5 +1,6 @@
 @import '@fontsource-variable/dm-sans';
 @import '@fontsource-variable/jetbrains-mono';
+@import 'rehype-callouts/theme/obsidian';
 
 html {
     /* font */
@@ -165,12 +166,33 @@ article {
 }
 
 .shiki {
-    border-radius: var(--radius-3);
     padding: var(--size-3) var(--size-4);
-    box-shadow: var(--shadow-3);
     font-family: var(--font-mono);
     align-self: center;
     margin-inline: auto;
+}
+
+.shiki,
+.callout {
+    border-radius: var(--radius-3);
+    box-shadow: var(--shadow-3);
+}
+
+.callout {
+    padding: 0;
+    line-height: inherit;
+}
+
+.callout-title {
+    background: none;
+    border-radius: revert;
+    padding: revert;
+    margin: var(--size-3) var(--size-4);
+}
+
+.callout-content {
+    margin: var(--font-size-1) var(--size-8);
+    overflow: hidden;
 }
 
 .surface-1 {
