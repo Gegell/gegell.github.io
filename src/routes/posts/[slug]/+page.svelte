@@ -48,6 +48,8 @@
     display: flex;
     gap: var(--size-2);
     margin-block: var(--size-3);
+    flex-wrap: wrap;
+    align-items: flex-start;
   }
 
   .tags span {
