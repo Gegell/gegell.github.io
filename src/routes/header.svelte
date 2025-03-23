@@ -27,6 +27,8 @@
 	nav {
 		padding-block: var(--size-7);
 		gap: var(--size-4);
+		display: flex;
+		justify-content: space-between;
 	}
 
 	.top-row {
@@ -45,26 +47,14 @@
 		list-style: none;
 		display: flex;
 		padding: 0;
-		flex-direction: column;
-		align-items: start;
+		flex-direction: row;
+		align-items: center;
 		max-width: fit-content;
+		gap: var(--size-4);
+		margin-block: 0;
 	}
 
 	li {
 		padding-inline-start: 0;
-	}
-
-	@media (min-width: 768px) {
-		nav {
-			display: flex;
-			justify-content: space-between;
-		}
-
-		ul.links {
-			gap: var(--size-4);
-			align-items: center;
-			flex-direction: row;
-			margin-block: 0;
-		}
 	}
 </style>
