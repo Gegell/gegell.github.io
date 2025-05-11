@@ -196,6 +196,7 @@ article {
 .callout {
     padding: 0;
     line-height: inherit;
+    mix-blend-mode: inherit;
 }
 
 .callout-title {
