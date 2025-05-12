@@ -79,6 +79,7 @@
 		display: flex;
 		justify-content: center;
 		gap: var(--size-relative-2);
+		margin-top: 0;
 	}
 
 	:global(svg.ri-reset-left-fill) {

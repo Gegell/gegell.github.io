@@ -129,6 +129,10 @@ article {
     margin-inline: auto;
 }
 
+code {
+    font-size: var(--font-size-1);
+}
+
 .prose {
     text-align: left;
     @media (min-width: 768px) {

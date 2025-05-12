@@ -95,46 +95,62 @@ the order that we are used to.
 -->
 
 ## The first Bit of Information
-To figure out what PRNG Factorio uses I immediately saw 2 ways of going about this.
-First of all, was just simple Internet research. I believed that I wouldn't be the
-first to wonder what sort of generator they use, seeing as the community is filled
-with a rather large proportion of very technically inclined individuals. After a
-bit of digging around I found following post, asking basically the thing I wanted
-to know, but already 8 years ago. There we also find following answer by @Cube -
-a former developer at Wube. They wrote:
+To start off, we need to figure out which PRNG is used in Factorio. To do so
+there were 2 approaches I considered:
+1. **Internet research** - The factorio community is quite large and filled with
+   many technically inclined individuals. Surely someone must have asked this
+   question before.
+2. **Reverse engineering** - The game is closed source, but the developers
+   graciously ship the debug symbols alongside the game binary. This means that
+   we can decompile the binary and inspect the code to figure out what is going
+   on under the hood.
+
+The first approach, i.e. the Internet research, was the one I started with.
+After digging around a bit I found a post on the Factorio forums asking basically
+the same thing I wanted to know, but already 10 years ago. There we also find
+following answer by @Cube - a former developer at Wube. They wrote:
 
 >[!cite] Cube - Tue Sep 30, 2014 12:27 pm - [forums.factorio.com - topic 5995](https://forums.factorio.com/viewtopic.php?t=5995)
->\[...\]
->
-> We chose `taus88` mainly because it is the fastest from boost's generators.
+>\[...\] We chose taus88 mainly because it is the fastest from boost's generators.
 > I was thinking of removing one of the three LFSRs (that should make it about
 > 40% (?) faster), but there is no point, since the ranom numbers are not a
 > bottleneck for us.
 
-This already gives us a pretty large hint on where to look next: the boost random library.
-There we find the following (abbreviated) implementation for the `taus88` generator:
+This already gives us a pretty large hint on where to look next: The boost random library.
+There we find the following (abbreviated) implementation for the [taus88]
+generator:
 ```cpp
 typedef xor_combine_engine<
-    xor_combine_engine<
-        linear_feedback_shift_engine<uint32_t, 32, 31, 13, 12>, 0,
-        linear_feedback_shift_engine<uint32_t, 32, 29, 2, 4>, 0>, 0,
-    linear_feedback_shift_engine<uint32_t, 32, 28, 3, 17>, 0> taus88;
+  xor_combine_engine<
+    linear_feedback_shift_engine<uint32_t, 32, 31, 13, 12>, 0,
+    linear_feedback_shift_engine<uint32_t, 32, 29, 2, 4>, 0>, 0,
+  linear_feedback_shift_engine<uint32_t, 32, 28, 3, 17>, 0> taus88;
+
+template<class UIntType, int w, int k, int q, int s>
+class linear_feedback_shift_engine {
+  // w = word size (e.g. 32 for 32 bit uint)
+  // k = number of bits in the LFSR
+  // q = feedback tap position
+  // s = number of steps to do at once
+  result_type operator()() {
+    const UIntType b = (((value << q) ^ value) & wordmask()) >> (k-s);
+    const UIntType mask = (wordmask() << (w-k)) & wordmask();
+    value = ((value & mask) << s) ^ b;
+    return value;
+  }
+}
 ```
+[taus88]: https://www.boost.org/doc/libs/1_88_0/doc/html/doxygen/headers/taus88_8hpp_1a3822a73532a76cfeca0db9888d676c72.html
+[linear_feedback_shift_engine]: https://www.boost.org/doc/libs/1_88_0/boost/random/linear_feedback_shift.hpp
 
-This means that `taus88` consists 3 of what the boost library calls 
-`linear_feedback_shift_engine` whose' results will be XOR'ed together. The linear 
-feedback shift engine is also commonly known as a linear feedback shift *register* (LFSR).
+This means that taus88 consists of 3 [linear_feedback_shift_engine]s whose' results will be XOR'ed together. Note that the linear feedback shift engine is also commonly referred to as *LFSR*: linear feedback shift *register*.
 
-### Ensuring that information is up to date
-As previously already mentioned I've considered 2 approaches, one of which was
-simply internet research. The result's I've found though were already quite old
-(~8 years) so I wanted to cross-check the information given on the forum against
-the most accurate source available: The game binary.
+As this information was already quite old (8 years since I started this project)
+I wanted to cross-check the information given on the forum against the most
+accurate source available: The game binary.
 
-Using [Ghidra](https://github.com/NationalSecurityAgency/ghidra) I've decompiled
-and inspected the `factorio.exe` alongside the debug symbol `.pdb` file the devs
-graciously ship with their game. Therein I found the `RandomGenerator` class to
-implement the `getInt()` function as follows:
+So for the 2<sup>nd</sup> step I used the [Ghidra](https://github.com/NationalSecurityAgency/ghidra) to decompile and inspected the factorio.exe alongside the provided .pdb debug symbols.
+Therein I found the `RandomGenerator` class to implement the `getInt()` function as follows:
 
 ```cpp
 uint RandomGenerator::getInt(RandomGenerator *this)
@@ -155,60 +171,52 @@ uint RandomGenerator::getInt(RandomGenerator *this)
 }
 ```
 
-The first thing which stood out to me was of course that almost none of the 
+The first thing which stood out to me was that almost none of the 
 constants used in the original `taus88` definition remained. This however was
 likely due to compiler optimizations doing constant folding and reducing the
 amount of operations needed. Though the fact that we store 3 seeds for our RNG
-states is the first promising indicator, so is the fact that they are updated
-independently of one another and their result is the XOR of all states.
+states is the first promising indicator that it is actually the same generator.
+Likewise so is the fact that they are updated independently of one another with the final result being the XOR of all states.
 
 To be sure with out a doubt though that they are equivalent I've implemented both
-variants in python such that they can be run using `sympy` which after running
-it for a single step on both does indeed confirm that all bits of the corresponding
-registers change are computed in the exact same fashion. In this instance I've
-used `sympy` as this would've been a tedious number of equivalence checks by
-hand (3 * 32 = 96). the code responsible for proving this equivalence can be
+variants in python such that they can be run using `sympy`. Updating both for a 
+single step indeed confirms that all bits of the corresponding registers update
+in the exact same fashion. In this instance I've
+used `sympy` as this would've been a tedious number of equivalence checks to do by
+hand (3 * 32 = 96). The code responsible for proving this equivalence can be
 found [here]().
-> [!todo]
+> [!warning] TODO
 > add link to my code which proves equivalence
 
-
-Sweet! So we now know that the RNG state is indeed just given by a linear
-combination of the 3 underlying LFSRs. This was a *very* neat thing to see, as
-those are known to be breakable quite easily. To see why, let's take a look at
-what such a LFSR is comprised of.
+Sweet! So we now know that the RNG state is given as a combination of 3 underlying LFSRs.
+This was a *very* neat thing to see, as those are known to be broken quite easily.
+To see why, let's take a look at how LFSRs are created and how they can be broken.
 
 ## LFSRs from Ground up
-LFSR is short for *linear feedback shift register*. To understand their behavior
-we'll build up to the full picture by considering each of the named components,
-adding one thing after another.
-
 Lets start with a *register*: A collection of bits, aggregated into a single variable.
 Each bit can be seen as a binary variable $x_{n-1} \dots x_2 x_1 x_0$ where each
-$x_i \in \{0, 1\}$. In the following it is beneficial to no longer consider the
-register to describe a number $\in [0, 2^n - 1]$ but rather actually as just the
-bits joined together. As such we will operate on these variables mainly using
-bitwise operations, especially so the bitwise XOR $\oplus$
+$x_i \in \{0, 1\}$. For the following it will be beneficial to not consider the
+register as describing a number $\in [0, 2^n - 1]$ but rather as a vector of
+individual bits joined together. We will define 2 operations which operate on the
+individual bits of the register:
+1. $x \oplus y$: The XOR operation. This is a binary operation which takes 2 bits and
+   returns 1 if the bits differ and 0 otherwise. This is the same as addition
+   modulo 2.
+2. $x \cdot y$: The AND operation. This is a binary operation which takes 2 bits and
+   returns 1 if both bits are 1, otherwise it returns 0.
 
-> [!todo]
-> insert the svelte LFSR component here with no arrows between the individual bits, just being able to toggle the bits individually.
-
-| $\oplus$ | 0   | 1   |
-| -------- | --- | --- |
-| **0**    | 0   | 1   |
-| **1**    | 1   | 0   |
-> [!note]- Regarding $\oplus$
-> We write $\oplus$ as this is a form of addition as we know from regular arithmetic.
-> We can consider our register states to be elements from $\mathbb{Z}/2\mathbb{Z}[X]$
-> i.e. the polynomial ring over binary variables. Then the bitwise XOR corresponds
-> both the addition and subtraction of 2 polynomials, as in $\mathbb{Z}/2\mathbb{Z}$
-> addition is the same as subtraction (see table above.)
+| $x$ | $y$ | $x \oplus y$ | $x \cdot y$ |
+|-----|-----|--------------|-------------|
+|  0  |  0  |      0       |      0      |
+|  0  |  1  |      1       |      0      |
+|  1  |  0  |      1       |      0      |
+|  1  |  1  |      0       |      1      |
 
 Extending our previously defined register to a *shift register* is simple enough:
 To shift our bits around we just take each higher bit and move it 1 position down,
 dropping the lowest bit.
 
-> [!todo]
+> [!warning] TODO
 > insert the svelte LFSR component here with no feedback connections, but the shift downward arrows, step, animate & reset buttons
 
 
@@ -220,9 +228,7 @@ first bit, as there we do not have a preceding bit from which we can obtain (new
 information, while we discard information in the last. If we do this now we
 basically implemented the *bit roll* operation:
 
-> [!todo]
-> insert the svelte LFSR component here with feedback connection to the first bit from the last bit, step, animate & reset button
-
+<LFSR tapMask=0b100000 />
 
 Hmmm. . . At least we no longer always arrive at an empty register, but the
 sequence when the last bit lights up is very predictable. This is due to the
@@ -232,9 +238,7 @@ pretty quickly spot the pattern produced by our current *feedback shift register
 To combat this we insert some *linear feedback*, by adding the feedback not
 only to the first bit, but also some intermediate bits:
 
-> [!todo]
-> insert the svelte LFSR component here with full feedback connections to the first & second bit, for the 4 bit LFSR, with step, animate & reset button
-
+<LFSR tapMask=0b110000/>
 
 Unlike the last steps it might not be immediately obvious why this step has the
 name that it has. The naming comes from the fact that the XOR $\oplus$ operation
@@ -242,25 +246,23 @@ we use to combine the feedback into the inner bits causes our bit states to be a
 linear combination of the previous bit states. This fact will also be what we
 use later to figure out the state from observations.
 
-There we have it! This is how one constructs a LFSR. Let's get to understanding
-*why* we did the steps we took & *why* we chose the intermediate bits that we
-chose to insert the feedback to.
+There we have it! This is how one constructs a LFSR. Let's now take a look at
+how we can use this to reverse the state of the LFSR from only the outputs.
 
-## LFSR<sup>-1</sup>
-While we previously started at a fixed state, i.e. the bits set to either 0 or 1,
-and generated the subsequent states and corresponding outputs, the thing we
-actually care about is the inverse problem. Given some output observations can
-we figure out what state we started with? To figure out how we can do this let's
-substitute in variables $x_i$ for the bits instead of using concrete values 0 / 1
-and track how the states of the corresponding bits change:
+### LFSR<sup>-1</sup>
+Previously we started at a fixed state, i.e. with all bits set to either 0 or 1,
+and generated the subsequent states and corresponding outputs from those.
+However, what we actually care about is the inverse problem.
+Given some output observations can we figure out what state we started with?
+To figure out how we can do this let's substitute in variables $x_i$ for the bits instead of concrete values and track how the corresponding bits change:
 
-> [!todo]
+> [!warning] TODO
 > insert LFSR from above using variables here, best also with a list of
 equations which get generated for the last bit for example. This would allow me
 to show that we can insert any sequence of values there to obtain an initial state.
 
 
-> [!todo]
+> [!warning] TODO
 > this part reeeeally needs a rewrite, it does not flow well -> why the sudden *formal* introduction of the vector spaces? Is it really necessary?
 
 Now, if you had an introductory course on linear algebra you also likely saw the
@@ -321,7 +323,7 @@ step, which makes each step invertible).
 
 <!-- If the above does not tell you much, don't worry. It basically states that we can setup a linear system of equations (that one thing from high school) -->
 
-## The complete package
+## Combining multiple LFSRs
 We've seen that we can solve the state of a single LFSR as a linear equation of
 the form $Ax=b$ where all components are computed modulo 2. Remember however that
 the full RNG result is determined by 3 independent LFSRs whos' output we XOR together.
@@ -389,7 +391,7 @@ $$
 s^{(t)} = A^{-1} \begin{bmatrix}o^{(t)} \\ o^{(t+1)} \\ o^{(t+2)}\end{bmatrix}
 $$
 
-> [!caution]- About the Invertibility of $T_i$
+> [!note]- Regarding the Invertibility of $T_i$
 > I'm actually not telling the full truth here.
 > If we consider the LFSRs as given by the boost library - and the parameters
 > used to instantiate them - we will notice that they operate on $n=32$ bit words,
@@ -450,7 +452,7 @@ There are 2 ways to tackle this:
    to our *Entropy Generators* which should lie adjacent to each other in the
    update loop, it will update one after the other, without any outside sources
    generating interfering calls to the RNG.
-> [!todo]
+> [!warning] TODO
 > fix the comment on update order, does not seem to directly work like this 
 
 
@@ -510,7 +512,7 @@ $$
 $$
 This means we can expect a total of 0.098 bit each successful crafting cycle! In fact, what we just calculated is a discretized version of the [Shannon Entropy](https://en.wikipedia.org/wiki/Entropy_(information_theory)) as if we observe the pattern a bit longer we might notice that the number of bits obtained in each positive case (i.e. where the probability is 0.7%) is $\lfloor-\log_2(p)\rfloor$ where $p$ is the probability of each event occurring. Similarly the same holds for $p > 0.5$ as there the result is just 0 bits observed. Thus we have a measure which we can apply to each recipe in the game to find the recipe with the most information per craft.
 
-> [!todo]
+> [!warning] TODO
 > insert the table here which shows all the recipe entropy values. 
 
 
@@ -528,7 +530,7 @@ As already alluded to in [[#LFSR but backwards]] we will need to compute a matri
 The current state will be computed from *observations* made when recycling [repair packs](https://wiki.factorio.com/Repair_pack). Each recycling operation will yield exactly 2 bits of information - 1 for each item. This in turn means that we require 88/2=44 recycling operations to have enough information to fully reconstruct the state.
 Now as we are only interested in the top most bit of each observations we have our 88 observations as: 
 $$o^{(t)}, o^{(t+1)}, \dots, o^{(t+87)} \in GF(2)$$
-> [!todo]
+> [!warning] TODO
 > add image of individual measurement unit 
 
 ### Figuring out the current State
@@ -570,7 +572,7 @@ where $[T^k]_j$ is the $j$-th column of $T^k$. These columns can be stored as 32
 1. The pointwise scalar vector multiplication $s_j^{(t)}$ with all the different vectors will either include all the vectors in the corresponding $k$-th state or not, thus we can implement this via a *decider combinator* again.
 2. Now we have 32 different 32 bit values which need to be XORed together. Unlike before we cannot utilize the implicit addition here, but instead have to use more *arithmetic combinators*. I've opted to use a *binary tree* to merge 2 bits using XOR together, as this is a fast reduction algorithm for prefix sums (which this is).
 
-> [!todo]
+> [!warning] TODO
 > insert image of a single LFSR skipper 
 
 ## Feasibility
@@ -592,7 +594,7 @@ The long answer is still a *"No"* - but with a reason attached. The main pain po
 - **Other RNG Crafts**: Other machines, e.g. your [scrap recycling](https://wiki.factorio.com/Scrap) plant on Fulgora and your [quality rolling](https://wiki.factorio.com/Quality) all over the factory. These will all of course call the same generator.
 - **Particles Spawning**: Particles are spawned with a random velocity, which in turn means that calls to the RNG are made. Where does this happen:
 	- **Steam Turbines** 
-        > [!todo]
+        > [!warning] TODO
         > pretty sure they do, but double check 
 	- **Train Smoke** - this means no trains are allowed to drive
 	- **Player Footsteps** - if you walk on dirt or sand, the player character feet will create little dust particles
@@ -600,7 +602,7 @@ The long answer is still a *"No"* - but with a reason attached. The main pain po
 - **Explosions / Fire**: E.g. no biters/asteroids running into landmines or using rocket turrets nor any active artillery.
 - **Trees dropping Leaves**: As far as I can tell this only happens when the trees die (e.g. are deconstructed).
 
-> [!todo]
+> [!warning] TODO
 > insert tree of the RNG calls made - would be nice to be able to analyze the code for the full tree, but the makeshift one might do the trick for now 
 
 
