@@ -12,6 +12,7 @@ published: true
 
 <script>
   import LFSR from './factorio-rng/lfsr'
+  import QualityCalculator from './factorio-rng/quality-calculator'
 </script>
 
 
@@ -206,11 +207,11 @@ individual bits of the register:
    returns 1 if both bits are 1, otherwise it returns 0.
 
 | $x$ | $y$ | $x \oplus y$ | $x \cdot y$ |
-|-----|-----|--------------|-------------|
-|  0  |  0  |      0       |      0      |
-|  0  |  1  |      1       |      0      |
-|  1  |  0  |      1       |      0      |
-|  1  |  1  |      0       |      1      |
+| --- | --- | ------------ | ----------- |
+| 0   | 0   | 0            | 0           |
+| 0   | 1   | 1            | 0           |
+| 1   | 0   | 1            | 0           |
+| 1   | 1   | 0            | 1           |
 
 Extending our previously defined register to a *shift register* is simple enough:
 To shift our bits around we just take each higher bit and move it 1 position down,
@@ -520,10 +521,11 @@ As we can see there are *waaay* better recipes to utilize for extracting informa
 There are obviously alternative recipes such as the [oil refinery](https://wiki.factorio.com/Oil_refinery) which has an entropy of 4.5 however is also quite a bit more expensive and slower than doing repair pack recycling.
 
 ## Actual Implementation
-To actually implement the reversal and manipulation of the RNG I've split the computation into 2 steps:
+To actually implement the reversal and manipulation of the RNG I've split the computation into the following steps:
 1. Sampling the current RNG
-2. Compute the **current internal** RNG state, and
-3. Compute the **future internal** states
+2. Computing the **current internal** RNG state,
+3. Predicting the **future internal** states, and finally
+4. Calculating corresponding **quality levels** for each future call
 
 As already alluded to in [[#LFSR but backwards]] we will need to compute a matrix vector product for both of these steps. Now the question is where do we get the matrices and where do we get the vectors from?
 
@@ -574,6 +576,83 @@ where $[T^k]_j$ is the $j$-th column of $T^k$. These columns can be stored as 32
 
 > [!warning] TODO
 > insert image of a single LFSR skipper 
+
+### Quality prediction
+Now that we have the next call results of the RNG before the actual in game calls
+happen, we need to make them usable for our purpose. This basically means implementing
+some fashion of the `rollQuality` function from the game.
+A reverse engineered version of the function can be seen here implemented in pseudo C++:
+```cpp
+// Fixedpoint value of the module effect from -32.768 to 32.767
+// e.g. 10% quality would be a value of 100
+typedef EffectValue int16_t;
+
+// Stub of relevant quality prototype fields
+struct QualityPrototype {
+    ID<QualityPrototype, uint8_t> id;
+    ID<QualityPrototype, uint8_t> next;
+    double nextProbability;
+}
+
+// Mapping from the ID<...> to QualityPrototype
+PrototypeList<QualityPrototype>::indexToPrototype;
+
+// Function which determines crafting result quality
+ID<QualityPrototype, uint8_t>* QualityPrototype::rollQuality(
+  ID<QualityPrototype, uint8_t> qualityID,
+  EffectValue bonus, 
+  RandomGenerator* generator,
+  IDIndexedData<uint8_t, ID<QualityPrototype, uint8_t>> 
+    const* unlockedQualities
+) {
+  // If no bonus, do early return -> no RNG call!
+  if (bonus == 0)
+    return qualityID.copy();
+  
+  QualityPrototype* quality = indexToPrototype[qualityID];
+
+  // Roll the RNG exactly once
+  double roll = RandomGenerator::uniformDouble(generator);
+
+  // If roll < threshold we upgrade to the next quality
+  double threshold = (double)((float)(bonus) / 100f);
+
+  // Find highest quality which beats the threshold
+  uint8_t nextIndex;
+  while ((nextIndex = quality->next.id.index) != 0) {
+    if (!unlockedQualities->data[nextIndex])
+      break;
+
+    // Scale by next upgrade probability, base game = 0.1
+    threshold *= quality->nextProbability;
+    if (roll > threshold)
+      break;
+
+    quality = indexToPrototype[nextIndex];
+  }
+  return quality->id.copy();
+}
+```
+
+If we take a look at how the function is implemented in the game we can see that
+it basically just takes the RNG roll and compares it against some thresholds. It
+stops as soon as it finds a threshold which is no longer beaten by the roll.
+
+This means that each craft which involves quality rolls will take exactly 1 call.
+And for each call we can compute the expected quality level by just comparing against
+all the thresholds, which stay constant during the game. Thus they can be precomputed
+in-game with some arithmetic combinators.
+
+> [!warning] TODO
+> insert image of the in game computation section here
+
+The calculator below shows the required threshold for each quality level, as well
+as the expected amount of each quality level for a given bonus.
+Note that when the threshold exceeds $2^{32}-1$ i.e. the `uint32_t` maximum value,
+we always upgrade, which is indicated by placing the thresholds in brackets.
+
+<QualityCalculator/>
+
 
 ## Feasibility
 Now to the important part, that you may be wondering about:
