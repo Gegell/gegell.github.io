@@ -6,6 +6,10 @@ import remarkMath from 'remark-math'
 import rehypeKatexSvelte from 'rehype-katex-svelte'
 import rehypeCallouts from 'rehype-callouts';
 import { createHighlighter } from 'shiki'
+import rehypeSlug from 'rehype-slug';
+import rehypeAutolinkHeadings from 'rehype-autolink-headings';
+import rehypeToc from '@stefanprobst/rehype-extract-toc';
+import rehypeTocExport from './src/lib/rehype-toc-export.js';
 
 const highlighter = await createHighlighter({
 	themes: ['ayu-dark', 'min-light'],
@@ -15,8 +19,17 @@ const highlighter = await createHighlighter({
 /** @type {import('mdsvex').MdsvexOptions} */
 const mdsvexOptions = {
 	extension: '.md',
-	remarkPlugins: [remarkMath],
-	rehypePlugins: [rehypeCallouts, rehypeKatexSvelte],
+	remarkPlugins: [
+		remarkMath
+	],
+	rehypePlugins: [
+		rehypeCallouts,
+		rehypeKatexSvelte,
+		rehypeSlug,
+		rehypeAutolinkHeadings,
+		rehypeToc,
+		rehypeTocExport
+	],
 	highlight: {
 		highlighter: async (code, lang = 'text') => {
 			const html = escapeSvelte(highlighter.codeToHtml(code, {
@@ -51,12 +64,12 @@ const config = {
 		prerender: {
 			handleHttpError: ({ path, referrer, message }) => {
 				// Ignore 404s
-                if (message.includes('404')) {
-                    return;
-                }
+				if (message.includes('404')) {
+					return;
+				}
 
-                // Log other errors
-                console.error('Failed to prerender', { path, referrer, message });
+				// Log other errors
+				console.error('Failed to prerender', { path, referrer, message });
 			},
 		}
 	}

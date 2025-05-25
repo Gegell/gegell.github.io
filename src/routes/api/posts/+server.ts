@@ -1,8 +1,8 @@
 import { json } from '@sveltejs/kit';
-import type { Post } from '$lib/types';
+import type { Post, PostSummary } from '$lib/types';
 
 async function getPosts() {
-	let posts: Post[] = [];
+	let posts: PostSummary[] = [];
 
 	const paths = import.meta.glob('/src/posts/*.md', { eager: true });
 	for (const path in paths) {
@@ -10,8 +10,12 @@ async function getPosts() {
 		const slug = path.split('/').at(-1)?.replace('.md', '');
 
 		if (file && typeof file === 'object' && 'metadata' in file && slug) {
-			const metadata = file.metadata as Omit<Post, 'slug'>;
-			const post = { ...metadata, slug } satisfies Post;
+			// Note that we use destructuring here to skip some other properties
+			const full_meta = file.metadata as Omit<Post, 'content' | 'slug'>;
+			if (!full_meta.published) continue; // Skip unpublished posts
+
+			const { title, date, description, categories } = full_meta as Omit<PostSummary, 'slug'>;
+			const post = { title, date, description, categories, slug } satisfies PostSummary;
 			posts.push(post);
 		}
 	}
