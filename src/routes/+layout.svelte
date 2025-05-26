@@ -13,7 +13,9 @@
 </script>
 
 <div class="layout">
-	<Header />
+	<header>
+		<Header />
+	</header>
 	<main>
 		<PageTransition url={data.url}>
 			{@render children?.()}

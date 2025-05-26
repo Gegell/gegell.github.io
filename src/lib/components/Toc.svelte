@@ -15,7 +15,7 @@
 	<ol>
 		{#each items as { id, value, children, depth }}
 			<li>
-				<a href={id}>{value}</a>
+				<a href={'#' + id}>{value}</a>
 				{#if children && children.length > 0}
 					{@render tocList(children)}
 				{/if}
@@ -29,8 +29,8 @@
 		<RiMenuFill size="28" />
 	</button>
 	{#if open}
-		<nav class="toc" transition:fly={{ x: 100, duration: 400 }}>
-			<h2>Table of Contents</h2>
+  <!-- TODO: remove the snapping behaviour when hiding/showing the ToC -->
+		<nav class="toc" transition:fly={{ x: 50, duration: 400 }}>
 			{@render tocList(headings)}
 		</nav>
 	{/if}
@@ -38,32 +38,32 @@
 
 <style>
 	.toc-sidebar {
-		position: fixed;
-		top: 0;
-		right: 0;
-		height: 100vh;
-		z-index: 1000;
-		display: flex;
-		flex-direction: column;
-		align-items: flex-end;
-		background: var(--surface-1, #fff);
-		box-shadow: var(--shadow-3, -2px 0 8px rgba(0, 0, 0, 0.08));
+		position: sticky;
+		top: var(--size-7);
+    overflow: visible;
 	}
 	.toc-burger {
-		margin: 1rem 1rem 0 0;
-		background: none;
+		background: var(--surface-4);
 		border: none;
 		cursor: pointer;
-		z-index: 1001;
+    margin-top: -.75ch;
+    margin-bottom: var(--size-relative-7)
 	}
 	.toc {
-		padding: 1rem 1.5rem;
 		width: 100%;
-		overflow-y: auto;
 	}
-	@media (max-width: 700px) {
-		.toc-sidebar.open {
-			width: 90vw;
-		}
+
+	ol {
+		counter-reset: section;
+		list-style-type: none;
+		list-style-position: inside;
+		padding-left: 0;
+	}
+	ol ol {
+		padding-left: 1rem;
+	}
+	li::before {
+		counter-increment: section;
+		content: counters(section, '.') '. ';
 	}
 </style>

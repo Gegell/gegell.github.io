@@ -12,28 +12,34 @@
 	<meta property="og:title" content={data.title} />
 </svelte:head>
 
-<article>
+<article class="columns">
+	<!-- Middle column -->
 	<!-- Title -->
-	<hgroup class="title">
-		<h1>{data.title}</h1>
-		<p>Published at {dateFormat(data.date)}</p>
-	</hgroup>
-
-	<!-- Tags -->
-	<div class="tags">
-		{#each data.categories as tag}
-			<span class="surface-4">&num;{tag}</span>
-		{/each}
+	<div class="head">
+		<hgroup class="title">
+			<h1>{data.title}</h1>
+			<p>Published at {dateFormat(data.date)}</p>
+		</hgroup>
+	
+		<!-- Tags -->
+		<div class="tags">
+			{#each data.categories as tag}
+				<span class="surface-4">&num;{tag}</span>
+			{/each}
+		</div>
 	</div>
-
-	<!-- Table of Content TOC -->
-	{#if data.showToc}
-		<Toc headings={data.toc} />
-	{/if}
 
 	<!-- Post content -->
 	<div class="prose">
 		<data.content />
+	</div>
+
+	<!-- Right column, mainly for toc -->
+	<div class="toc">
+		<!-- Table of Content TOC -->
+		{#if data.showToc}
+			<Toc headings={data.toc} />
+		{/if}
 	</div>
 </article>
 
@@ -64,5 +70,26 @@
 		border-radius: var(--radius-round);
 		background-color: var(--surface-4);
 		color: var(--text-2);
+	}
+
+	.columns {
+		display: grid;
+		grid-template-columns: 1fr 80ch minmax(max-content, 1fr);
+		grid-template-areas:
+			'. content-head .'
+			'left content-main right';
+		gap: var(--size-7);
+		max-inline-size: 100%;
+		margin-inline: auto;
+	}
+
+	.head {
+		grid-area: content-head;
+	}
+	.prose {
+		grid-area: content-main;
+	}
+	.toc {
+		grid-area: right;
 	}
 </style>
