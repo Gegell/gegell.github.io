@@ -501,25 +501,42 @@ r_2 \leq \left\lfloor 0.007 \cdot 2^{32} \right\rfloor &=\;&     30\,064\,771_{1
 \end{alignat}
 $$
 
-In particular: If U238 **was not** generated, we know that the first 7 bits are 1 and if U235 **was** generated then the first 7 bits were 0. Otherwise, afaik we have no real knowledge about the generator.
+In particular: If U238 **was not** generated, we know that the first 7 bits are 1 and if U235 **was** generated then the first 7 bits were 0.
+Otherwise, afaik we have no real knowledge about the generator.
 
-Cool! But which recipe will yield us the highest amount of information each time it completes? As the more information we obtain with a single crafting cycle, the fewer crafts we require and the faster we can determine the internal state.
+Cool! But which recipe will yield us the highest amount of information each time it completes?
+As the more information we obtain with a single crafting cycle, the fewer crafts we require and the faster we can determine the internal state.
 
-As we saw above, the only information we can observe is determined by the top bits, and whether we obtained the item or not. If we now estimate that the rolls are actually evenly distributed, we can compute the expected value of information gained with each roll & observation:
+As we saw above, the only information we can observe is determined by the top bits, and whether we obtained the item or not.
+If we now estimate that the rolls are actually evenly distributed, we can compute the expected value of information gained with each roll & observation:
 $$
 \begin{align*}
 \underbrace{0.007 \cdot 7\,\text{bit}}_{\text{no U238}} + \underbrace{0.993 \cdot 0\,\text{bit}}_{\text{U238}} &= 0.049\,\text{bit}\\
 \underbrace{0.993 \cdot 0\,\text{bit}}_{\text{no U235}} + \underbrace{0.007 \cdot 7\,\text{bit}}_{\text{U235}} &= 0.049\,\text{bit}
 \end{align*}
 $$
-This means we can expect a total of 0.098 bit each successful crafting cycle! In fact, what we just calculated is a discretized version of the [Shannon Entropy](https://en.wikipedia.org/wiki/Entropy_(information_theory)) as if we observe the pattern a bit longer we might notice that the number of bits obtained in each positive case (i.e. where the probability is 0.7%) is $\lfloor-\log_2(p)\rfloor$ where $p$ is the probability of each event occurring. Similarly the same holds for $p > 0.5$ as there the result is just 0 bits observed. Thus we have a measure which we can apply to each recipe in the game to find the recipe with the most information per craft.
+
+This means we can expect a total of 0.098 bit each successful crafting cycle!
+In fact, what we just calculated is a discretized version of the
+[Shannon Entropy](https://en.wikipedia.org/wiki/Entropy_(information_theory)) as
+if we observe the pattern a bit longer we might notice that the number of bits
+obtained in each positive case (i.e. where the probability is 0.7%) is
+$\lfloor-\log_2(p)\rfloor$ where $p$ is the probability of each event occurring.
+Similarly the same holds for $p > 0.5$ as there the result is just 0 bits observed.
+Thus we have a measure which we can apply to each recipe in the game to find the recipe with the most information per craft.
 
 > [!warning] TODO
 > insert the table here which shows all the recipe entropy values. 
 
 
-As we can see there are *waaay* better recipes to utilize for extracting information from the game. One might think that [scrap recycling](https://wiki.factorio.com/Scrap) would yield a lot of information, but is with an entropy of 2.05 only slightly above recipes like recycling [repair packs](https://wiki.factorio.com/Repair_pack) which have entropy of 2. This is due to the fact that recycling repair packs (and similar recipes with ingredient count = 4n+2) yields exactly one bit of information of the RNG output in either case, as it is a perfect 50 / 50 split on whether the item will be created or not.
-There are obviously alternative recipes such as the [oil refinery](https://wiki.factorio.com/Oil_refinery) which has an entropy of 4.5 however is also quite a bit more expensive and slower than doing repair pack recycling.
+As we can see there are *waaay* better recipes to utilize for extracting information from the game.
+One might think that [scrap recycling](https://wiki.factorio.com/Scrap) would yield a lot of information,
+but is with an entropy of 2.05 only slightly above recipes like recycling [repair packs](https://wiki.factorio.com/Repair_pack) which have entropy of 2.
+This is due to the fact that recycling repair packs (and similar recipes with ingredient count = 4n+2)
+yields exactly one bit of information of the RNG output in either case,
+as it is a perfect 50 / 50 split on whether the item will be created or not.
+There are obviously alternative recipes such as the [oil refinery](https://wiki.factorio.com/Oil_refinery)
+which has an entropy of 4.5 however is also quite a bit more expensive and slower than doing repair pack recycling.
 
 ## Actual Implementation
 To actually implement the reversal and manipulation of the RNG I've split the computation into the following steps:
@@ -528,7 +545,8 @@ To actually implement the reversal and manipulation of the RNG I've split the co
 3. Predicting the **future internal** states, and finally
 4. Calculating corresponding **quality levels** for each future call
 
-As already alluded to in [[#LFSR but backwards]] we will need to compute a matrix vector product for both of these steps. Now the question is where do we get the matrices and where do we get the vectors from?
+As already alluded to in [[#LFSR but backwards]] we will need to compute a matrix vector product for both of these steps.
+Now the question is where do we get the matrices and where do we get the vectors from?
 
 The current state will be computed from *observations* made when recycling [repair packs](https://wiki.factorio.com/Repair_pack). Each recycling operation will yield exactly 2 bits of information - 1 for each item. This in turn means that we require 88/2=44 recycling operations to have enough information to fully reconstruct the state.
 Now as we are only interested in the top most bit of each observations we have our 88 observations as: 
@@ -565,15 +583,25 @@ In practice this equation is computed in 2 parts:
 2. XOR of all the vectors via implicit summing. The vectors in $A'$ all contain only 0 or 1, meaning taking the sum over all included vectors, and finally extracting only the last bit of the sum is equivalent of taking the XOR over all of them. This is done by wiring the decider outputs all together and merging them in a single *arithmetic combinator*.
 
 ### Looking into the future
-We perform a similar actions to compute the future states of the individual LFSRs. However, as all LFSR states require fewer than 32 bits, we can store the lookup table in a more compact fashion. For each LFSR we compute the following:
+We perform a similar actions to compute the future states of the individual LFSRs.
+However, as all LFSR states require fewer than 32 bits, we can store the lookup table in a more compact fashion.
+For each LFSR we compute the following:
 $$T^ks^{(t)} = s^{(t+k)}$$
-This is computed for $k=1,2,\dots,256$, where $T$ and $s$ are different between the 3 sub LFSRs. From this we can again rewrite these matrix vector multiplications as:
+This is computed for $k=1,2,\dots,256$, where $T$ and $s$ are different between the 3 sub LFSRs.
+From this we can again rewrite these matrix vector multiplications as:
 $$
 s^{(t+k)} = \bigoplus_{j=1}^{32} s^{(t)}_j \cdot [T^k]_j
 $$
-where $[T^k]_j$ is the $j$-th column of $T^k$. These columns can be stored as 32 bit integers, as $T^k \in GF(2)^{32 \times 32}$. Hence the skip ahead equation can be implemented in parallel for all $k$ steps as follows:
-1. The pointwise scalar vector multiplication $s_j^{(t)}$ with all the different vectors will either include all the vectors in the corresponding $k$-th state or not, thus we can implement this via a *decider combinator* again.
-2. Now we have 32 different 32 bit values which need to be XORed together. Unlike before we cannot utilize the implicit addition here, but instead have to use more *arithmetic combinators*. I've opted to use a *binary tree* to merge 2 bits using XOR together, as this is a fast reduction algorithm for prefix sums (which this is).
+where $[T^k]_j$ is the $j$-th column of $T^k$. These columns can be stored as 32 bit integers, as $T^k \in GF(2)^{32 \times 32}$.
+Hence the skip ahead equation can be implemented in parallel for all $k$ steps as follows:
+1. The pointwise scalar vector multiplication $s_j^{(t)}$ with all the different
+   vectors will either include all the vectors in the corresponding $k$-th state or not,
+   thus we can implement this via a *decider combinator* again.
+2. Now we have 32 different 32 bit values which need to be XORed together.
+   Unlike before we cannot utilize the implicit addition here, but instead have
+   to use more *arithmetic combinators*.
+   I've opted to use a *binary tree* to merge 2 bits using XOR together,
+   as this is a fast reduction algorithm for prefix sums (which this is).
 
 > [!warning] TODO
 > insert image of a single LFSR skipper 
@@ -658,40 +686,88 @@ we always upgrade, which is indicated by placing the thresholds in brackets.
 ## Feasibility
 Now to the important part, that you may be wondering about:
 
-<center>Sweet! Can I use this to now do &lt;insert RNG manipulation target&gt; in <i>my</i> save-game?</center>
+<div style="text-align:center;">
+  Sweet! Can I use this to now do &lt;insert RNG manipulation target&gt; in <i>my</i> save-game?
+</div>
 
-The short answer: No.
+The short answer: Very unlikely. Why?
+For this you can dig into the following tree which shows many of the paths in the
+game's code which might lead to a random call.
 
-The long answer is still a *"No"* - but with a reason attached. The main pain point is the RNG being shared for a multitude of things. As mentioned before I've taken a look at the games code trying to reverse some information out of it. One further nugget of knowledge that I've stumbled upon is which random generator they use: 
-- `unsafeRandom`
-- `generalRandomGenerator` - This is the RNG that is used in the [RNG call for Item Creation](app://obsidian.md/index.html#RNG%20call%20for%20Item%20Creation)
-- `aiRandomGenerator` - _I **assume** that this is the RNG used for biter behavior, not yet researched though_.
-- `entitiesRandomGenerator`
-- `mapRandomGenerator`
-- `triggersRandomGenerator`
-*that's it*. 
-6 different generators, with both crafting item result creation code AND quality rolling depending on the `generalRandomGenerator` on the `Map` object. Now as you might already infer from the name of said RNG, there are also other functions which likewise utilize this generator. These include (but are not limited to):
-- **Other RNG Crafts**: Other machines, e.g. your [scrap recycling](https://wiki.factorio.com/Scrap) plant on Fulgora and your [quality rolling](https://wiki.factorio.com/Quality) all over the factory. These will all of course call the same generator.
-- **Particles Spawning**: Particles are spawned with a random velocity, which in turn means that calls to the RNG are made. Where does this happen:
-	- **Steam Turbines** 
-        > [!warning] TODO
-        > pretty sure they do, but double check 
-	- **Train Smoke** - this means no trains are allowed to drive
-	- **Player Footsteps** - if you walk on dirt or sand, the player character feet will create little dust particles
-- **Fulgora Lightning**: Whenever it turns night on Fulgora there will be lightning strikes at *random positions*, [about every 10 seconds per chunk](https://wiki.factorio.com/Fulgora#Lightning).
-- **Explosions / Fire**: E.g. no biters/asteroids running into landmines or using rocket turrets nor any active artillery.
-- **Trees dropping Leaves**: As far as I can tell this only happens when the trees die (e.g. are deconstructed).
+> [!todo] TODO
+> Insert image + link to proper rng call tree here
 
-> [!warning] TODO
-> insert tree of the RNG calls made - would be nice to be able to analyze the code for the full tree, but the makeshift one might do the trick for now 
+The main takeaways from that graph are as follows:
+- There are actually not that many different types of random generators which get
+  used throughout the game.
+- Important for our considerations is the <span style="color:green">generalRandomGenerator</span>#
+  which gets used by the `rollQuality` call.
 
+Note that most of these generators have only a single instance which gets shared
+across the entire `Map` object (i.e. across all surfaces you have the same state).
+  
+This sharing of rng state especially means that we would need to also predict
+the number of calls made outside of our machine between the individual cycles
+to keep a consistent state.
+Otherwise we quickly desync between the computed state and the actual game state.
 
-Why are these additional calls problems again?
-1. As mentioned in [[#Consecutive calls]] we require the RNG calls that we record to be either directly consecutive[^1] or such that we can measure the number of calls which happened between the recorded calls. While it is certainly possible to compute some of the number of calls (e.g. track all machines doing RNG calls using circuit networks), it is not tractable to do for all sources (i.e. how would you measure the number of smoke particles emitted by the trains?)
-2. The sheer number of calls made. While we can easily compute 1000 or even 2000 steps into the future at once, we can just as easily call the random generator so often, consider trash recycling: Each operation requires 12! calls to the RNG! Similarly, the locomotives while driving will spawn a particle every couple of ticks, and that is for every locomotive.
-   When scaling these randomness sources up in number (as you do in an automation game) you quickly exceed the speed you can precompute the RNG state for.
+While it's not impossible in theory to do so, it is in fact very intractable:
+One would need to reimplement all the different function calls and their behaviour
+enough such that the rng calls are predictable for all objects using the same generator.
+At that point you are basically just reimplementing major parts of Factorio
+inside of Factorio (which while interesting is not the task at hand).
 
-[^1]: I already tried to utilize sub-tick mechanics to measure the calls in a consecutive block within a single tick. For that I assumed the update order would allow me to do so. Sadly this is currently broken as it seems the wakeup order of entities on a circuit network change over time, which brought my required ordering out of order.
+A less optimal alternative is to simply instead resample from time to time, and
+hope that there are not too many calls which have been interwoven in the mean time.
+
+However to use this properly the built factory needs to be essentially built with
+the goal of RNG manipulation in mind - To be able to mitigate most common sources
+of calls on the `generalRandomGenerator`. These include:
+- **Mining Drill Resource Selection** - Hence all mining drills should be able to
+  be turned off to place them in an idle state.
+- **Fulgoran Lightning Strikes** - These occur during nighttime on Fulgora
+  [about every 10 seconds per chunk](https://wiki.factorio.com/Fulgora#Lightning).
+  To circumvent them sparking calls during our manipulation it needs to be done
+  during daytime there.
+- **Other RNG Crafts** - Not only quality, but any recipe with a random output will
+  make calls to the generator. Either implement capabilities to turn them off, or
+  some method to count the number of calls made every time a craft occurs.
+
+The following are speculation and I have not tested yet in what capacity they actually
+influence the state:
+- **Explosions / Fire** - This means no biters nor asteroids should be running
+  into landmines nor should there be rocket turrets or any active artillery.
+- **Trees dropping Leaves** - Happens when trees are deconstructed, so no active
+  agriculture towers.
+- **Particles Spawning** - Particles are spawned with a random velocity, which in
+  turn means that calls to the RNG are made.
+  For instance **trains** consuming fuel will randomly emit puffs of smoke.
+  
+Another issue would be the sheer amount of computation that is necessary to keep
+up with the game. For instance a single scrap recycling craft requires 12 calls
+to simulate. 
 
 ## Conclusion
-While sadly the applicability in true maps seems limited for now - I have at least shown the feasibility to do RNG state computation and manipulation under "lab" conditions. Likewise the technology shown here might be beneficial to those who might want to TAS some aspects of the game, as manipulating the RNG can now be done in a calculated instead of other black box methods, such as repeatedly reloading the save and trying again and again with slight input variations.
+All in all, the fact is that the RNG used in Factorio is quite weak, and even
+completely reversible in its entirety within the game.
+Proper exploitation however is very difficult to do, and once one has access to
+many of the required resources might not even be required anymore, as simply
+increasing production means, one reaches the law of big numbers territory, i.e.
+the average production is close to the real production results.
+
+None the less, this project was quite a learning experience encompassing:
+- Learning about *Galois Fields* and their combination with vector spaces.
+- Reversal of the game binary, and figuring out the relevant control flows.
+  Even splurging on (Binary Ninja)[https://binary.ninja/] which was so much more
+  useful for reverse engineering than the open source alternative 
+  (Ghidra)[https://github.com/NationalSecurityAgency/ghidra].
+- Reimplementing the RNG, the matrix solver and parallel matrix multiplier all
+  in game in an efficient manner.
+
+P.s. I've begun this project end of april 2024, and finally got over being lazy
+and published it more than a year later.
+In the mean time someone else also posted about this on the
+Factorio forums (Random number manipulation possibilities)[https://forums.factorio.com/viewtopic.php?p=660560].
+As far as I can tell they stopped at a similar point as I did in one of the earlier
+stages in the project, that is predicting the state externally with a separate
+python script from some observations.
