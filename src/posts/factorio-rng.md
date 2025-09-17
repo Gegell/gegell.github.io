@@ -21,53 +21,42 @@ So how did we get here? The following is my journey to figure out how Factorio's
 
 
 ## Introduction
-A bit of surrounding history first. What am I doing here, why would something 
-like this be interesting and which projects have inspired me to even try applying 
-this to Factorio?
+The *Factorio Space Age* DLC introduced a new mechanic heavily reliant on random chance. 
+I'm of course talking about the *quality* mechanic [FFF #375](https://www.factorio.com/blog/post/fff-375).
+The initial announcement of this new mechanism saw a split in the community, 
+some eagerly awaiting this new challenge, while others were sceptical of the introduction of randomness across all crafting chains.
 
-Many games rely on random processes to introduce some sort of unpredictability 
-into the gameplay loop. A couple of areas where game developers might be interested 
-in utilizing randomization are:
-- Procedural terrain generation (e.g. ore/tree/cliff placement)
-- Loot table generation (e.g. drops of items from monsters)
-- Crit rolling
-- Random shuffles (e.g. in card games or similar)
+Factorio prides itself in their *deterministic* gameplay update, 
+allowing them, among other things, their replay feature and lockstep multiplayer simulation.
+This however, might lead one to ponder the following question:
+<p style="text-align:center;"><i>But *how* exactly does a *deterministic* process generate *random* values?</i></p>
 
-Here the randomness introduces a bit of additional variation which allows for the
-same underlying deterministic processes to generate wildly different experiences -
-think of rolling a completely different card deck, depending on the hand you get
-dealt you might drive different strategies.
-
-Now one of the older questions in computing is:
-
-<p style="text-align:center;"><i>How can we generate random values on a deterministic machine?</i></p>
-
-There are 2 different approaches which can be taken:
+In general computing, there are 2 different approaches which can be taken to tackle the task introducing randomness:
 1. Generate "_**true**_" random numbers - they are "true" in the sense that we
    obtain them from an external source which we assume to produce a truly random
    sequence of bits. Think of measuring when an isotope decays or random floating
    voltage levels on a resistor.
-2. Generate **pseudo-random** numbers - these number sequences showcase properties
-   similar to true random numbers, the key difference to *true* random numbers
-   though are that pseudo random numbers are generated via a deterministic process.
-   This means given a set starting *seed* (initial value) we will always observe
-   the same output sequence.
+2. Generate **pseudo-random** numbers - these are sequences of numbers which exhibit properties
+   similar to those found in sequences of true random numbers.
+   The key difference to *true* random numbers is however, that *pseudo* random numbers are produced through a deterministic process.
+   In particular, starting from the same internal state, applying the same algorithm the resulting sequence will always be the same.
 
-Now for game development the use of PRNGs (*pseudo random number generators*)
+It is important to note, that for game development the use of PRNGs (*pseudo random number generators*)
 offers some key advantages:
-- While the output of the generator seems random they are reproducible. This is
-  advantageous in many cases, e.g. for consistency over different clients connected
-  to a server, reproducible world generation, replays via input recording,...
-- Their speed. Gathering random values from external sensors is quite slow 
+- The output distribution behaves the same as true random numbers would.
+- They deterministically produce the same sequence from the same state.
+  This is advantageous in many cases: Consider consistency across different clients connected
+  to a shared server state, reproducible world generation, replays via input recording,...
+- Finally, their speed. Gathering random values from external sensors is quite slow 
   (1000s of CPU cycles) while some pseudo random generators can be implemented
   using relatively few instructions thus being able to run magnitudes faster.
 
-Now since we know that pseudo random generators are used we have the chance to do
-something quite funny (at least in my humble opinion): If we figure out what the
-initial seed / state of the random generator is we can predict future rolls by
-performing the same computations *before* the actual game performs those random 
-calls. This allows us to predict the outcomes of "random" events in games, before
-they even occur!
+As such, we *know* that they of course also use *pseudo random numbers* as opposed to true random numbers.
+Thus, we have the chance to do something quite funny (at least in my humble opinion):
+If one can figure out what the current state of the random generator is,
+future rolls yet to occur can be predicted,
+by simply performing the same computations *before* the actual game performs those random calls.
+This allows us to build an oracle for "random" events in the game, before they even happen!
 
 <!-- Let's now take a small timeline of events which occurred until this blog post transpired:
 - [The Mess Detector - Matthew, Earthcomputer, et. al.](https://www.youtube.com/watch?v=FPmQ0rnJjNc)
@@ -96,21 +85,16 @@ in the sequence. It is essentially the counting approach, just not counting in
 the order that we are used to.
 -->
 
-## The first Bit of Information
-To start off, we need to figure out which PRNG is used in Factorio. To do so
-there were 2 approaches I considered:
-1. **Internet research** - The factorio community is quite large and filled with
-   many technically inclined individuals. Surely someone must have asked this
-   question before.
-2. **Reverse engineering** - The game is closed source, but the developers
-   graciously ship the debug symbols alongside the game binary. This means that
-   we can decompile the binary and inspect the code to figure out what is going
-   on under the hood.
+## The First Bit of Information
+While we can certainly say that they use a PRNG in Factorio, as of yet we do not
+know which one they actually chose.
 
-The first approach, i.e. the Internet research, was the one I started with.
+To figure this out, the first step was doing some rudimentary internet research.
+As the factorio community is quite large and filled with many technically inclined individuals,
+*surely* someone must have asked this question before.
 After digging around a bit I found a post on the Factorio forums asking basically
-the same thing I wanted to know, but already 10 years ago. There we also find
-following answer by @Cube - a former developer at Wube. They wrote:
+the same thing I wanted to know, 11 years ago already.
+In it we also find following answer by @Cube - a former developer at Wube. They wrote:
 
 >[!cite] Cube - Tue Sep 30, 2014 12:27 pm - [forums.factorio.com - topic 5995](https://forums.factorio.com/viewtopic.php?t=5995)
 >\[...\] We chose taus88 mainly because it is the fastest from boost's generators.
@@ -145,14 +129,17 @@ class linear_feedback_shift_engine {
 [taus88]: https://www.boost.org/doc/libs/1_88_0/doc/html/doxygen/headers/taus88_8hpp_1a3822a73532a76cfeca0db9888d676c72.html
 [linear_feedback_shift_engine]: https://www.boost.org/doc/libs/1_88_0/boost/random/linear_feedback_shift.hpp
 
-This means that taus88 consists of 3 [linear_feedback_shift_engine]s whose' results will be XOR'ed together. Note that the linear feedback shift engine is also commonly referred to as *LFSR*: linear feedback shift *register*.
+This means that taus88 consists of 3 [linear_feedback_shift_engine]s whose' results are XOR'ed together.
+Note that the linear feedback shift engine is also commonly referred to as *LFSR*: *linear feedback shift register*.
 
-As this information was already quite old (8 years since I started this project)
-I wanted to cross-check the information given on the forum against the most
+This information however was already quite old -- It already was 8 years old when beginning this project.
+Hence, I wanted to cross-check the information given on the forum against the most
 accurate source available: The game binary.
 
-So for the 2<sup>nd</sup> step I used the [Ghidra](https://github.com/NationalSecurityAgency/ghidra) to decompile and inspected the factorio.exe alongside the provided .pdb debug symbols.
-Therein I found the `RandomGenerator` class to implement the `getInt()` function as follows:
+While the game itself is closed source, the developers graciously ship a `.pdb` file containing the debug symbols alongside the game binary.
+This means, that we can generate a well annotated decompilation of the binary, to inspect the code and figure out what is going on under the hood.
+To this end, I used both the open source tool [Ghidra](https://github.com/NationalSecurityAgency/ghidra) transitioning to [Binary Ninja](https://binary.ninja/) in later parts.
+In the game's code I found the `RandomGenerator` class to implement the `getInt()` function as follows:
 
 ```cpp
 uint RandomGenerator::getInt(RandomGenerator *this)
@@ -325,7 +312,7 @@ step, which makes each step invertible).
 
 <!-- If the above does not tell you much, don't worry. It basically states that we can setup a linear system of equations (that one thing from high school) -->
 
-## Combining multiple LFSRs
+### Combining multiple LFSRs
 We've seen that we can solve the state of a single LFSR as a linear equation of
 the form $Ax=b$ where all components are computed modulo 2. Remember however that
 the full RNG result is determined by 3 independent LFSRs whos' output we XOR together.
@@ -526,6 +513,10 @@ Similarly the same holds for $p > 0.5$ as there the result is just 0 bits observ
 Thus we have a measure which we can apply to each recipe in the game to find the recipe with the most information per craft.
 
 > [!warning] TODO
+> add a graph of the discretized shannon entropy here to show that .5 is the optimal probability for
+> obtaining information.
+
+> [!warning] TODO
 > insert the table here which shows all the recipe entropy values. 
 
 
@@ -554,7 +545,7 @@ $$o^{(t)}, o^{(t+1)}, \dots, o^{(t+87)} \in GF(2)$$
 > [!warning] TODO
 > add image of individual measurement unit 
 
-### Figuring out the current State
+### Determining the current state
 This means that we only take the first row from the linear equation defined above for computing observations from the state:
 $$
 P_1 \underbrace{\begin{bmatrix}T_1^k & 0 & 0 \\ 0 & T_2^k & 0 \\ 0 & 0 & T_3^k\end{bmatrix}}_{T^k}
