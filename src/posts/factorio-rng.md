@@ -618,8 +618,16 @@ Now the question is where do we get the matrices and where do we get the vectors
 The current state will be computed from *observations* made when recycling [repair packs](https://wiki.factorio.com/Repair_pack). Each recycling operation will yield exactly 2 bits of information - 1 for each item. This in turn means that we require 88/2=44 recycling operations to have enough information to fully reconstruct the state.
 Now as we are only interested in the top most bit of each observations we have our 88 observations as: 
 $$o^{(t)}, o^{(t+1)}, \dots, o^{(t+87)} \in GF(2)$$
-> [!warning] TODO
-> add image of individual measurement unit 
+
+A single unit measuring then can look as follows:
+
+![A single entropy measurement unit.](factorio-rng/img/ingame_entropy_read_single.png)
+
+This unit will provide us with 2 bits.
+To reconstruct the state in a speedy manner, we copy this singular unit 44 times, yielding 88 total bits.
+In total this then comes out to:
+
+![All the entropy measurement units together.](factorio-rng/img/ingame_entropy_read_all.png)
 
 ### Determining the current state
 This means that we only take the first row from the linear equation defined above for computing observations from the state:
@@ -670,8 +678,11 @@ Hence the skip ahead equation can be implemented in parallel for all $k$ steps a
    I've opted to use a *binary tree* to merge 2 bits using XOR together,
    as this is a fast reduction algorithm for prefix sums (which this is).
 
-> [!warning] TODO
-> insert image of a single LFSR skipper 
+For a single LFSR this then looks as follows:
+![Parallel look-ahead for a single LFSR](factorio-rng/img/ingame_multi_step_single.png)
+
+> [!warning] TODO:
+> Mark the 2 sections described above in the given image
 
 ### Quality prediction
 Now that we have the next call results of the RNG before the actual in game calls
@@ -739,8 +750,7 @@ And for each call we can compute the expected quality level by just comparing ag
 all the thresholds, which stay constant during the game. Thus they can be precomputed
 in-game with some arithmetic combinators.
 
-> [!warning] TODO
-> insert image of the in game computation section here
+![Computing the quality levels from RNG states in game.](factorio-rng/img/ingame_quality_compute.png)
 
 The calculator below shows the required threshold for each quality level, as well
 as the expected amount of each quality level for a given bonus.
