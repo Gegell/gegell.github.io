@@ -90,11 +90,11 @@ While we can certainly say that they use a PRNG in Factorio, as of yet we do not
 know which one they actually chose.
 
 To figure this out, the first step was doing some rudimentary internet research.
-As the factorio community is quite large and filled with many technically inclined individuals,
+As the Factorio community is quite large and filled with many technically inclined individuals,
 *surely* someone must have asked this question before.
 After digging around a bit I found a post on the Factorio forums asking basically
 the same thing I wanted to know, 11 years ago already.
-In it we also find following answer by @Cube - a former developer at Wube. They wrote:
+In it, we also find following answer by @Cube - a former developer at Wube. They wrote:
 
 >[!cite] Cube - Tue Sep 30, 2014 12:27 pm - [forums.factorio.com - topic 5995](https://forums.factorio.com/viewtopic.php?t=5995)
 >\[...\] We chose taus88 mainly because it is the fastest from boost's generators.
@@ -161,13 +161,12 @@ uint RandomGenerator::getInt(RandomGenerator *this)
 ```
 
 The first thing which stood out to me was that almost none of the 
-constants used in the original `taus88` definition remained. This however was
-likely due to compiler optimizations doing constant folding and reducing the
-amount of operations needed. Though the fact that we store 3 seeds for our RNG
-states is the first promising indicator that it is actually the same generator.
-Likewise so is the fact that they are updated independently of one another with the final result being the XOR of all states.
+constants used in the original `taus88` definition remained.
+This can be attributed to compiler optimizations doing constant folding reducing the number of operations needed. 
+Though the fact that we store 3 seeds for our RNG state is the first promising indicator that it is actually the same generator.
+Likewise, so is the fact that they are updated independently of one another with the final result being the XOR of all states.
 
-To be sure with out a doubt though that they are equivalent I've implemented both
+To be sure without a doubt though that they are equivalent I've implemented both
 variants in python such that they can be run using `sympy`. Updating both for a 
 single step indeed confirms that all bits of the corresponding registers update
 in the exact same fashion. In this instance I've
@@ -179,19 +178,20 @@ found [here]().
 
 Sweet! So we now know that the RNG state is given as a combination of 3 underlying LFSRs.
 This was a *very* neat thing to see, as those are known to be broken quite easily.
-To see why, let's take a look at how LFSRs are created and how they can be broken.
+Why and how? This is what we'll explore in the next chapter.
 
-## LFSRs from Ground up
-Lets start with a *register*: A collection of bits, aggregated into a single variable.
-Each bit can be seen as a binary variable $x_{n-1} \dots x_2 x_1 x_0$ where each
-$x_i \in \{0, 1\}$. For the following it will be beneficial to not consider the
-register as describing a number $\in [0, 2^n - 1]$ but rather as a vector of
-individual bits joined together. We will define 2 operations which operate on the
-individual bits of the register:
+## The Mathy Part
+To begin, we need to understand what the *linear feedback shift register* (LFSR) actually models.
+Initially we consider just a simple *register*:
+It describes a collection of bits, aggregated into a single value $x$.
+Each individual bit $x_i$ of it can be seen as a binary variable with $x_i \in \{0, 1\} = \mathbb{Z}_2$.
+By combining multiple bits through concatenation we build the entire register as $x = x_{n-1} \dots x_2 x_1 x_0$.
+While it is common to consider this register value $x$ to represent a number in the range $[0, 2^n-1] \subseteq \mathbb{Z}$,
+it is more useful in our case to instead consider the register to describe a *vector* of individual bits, i.e. $x \in \mathbb{Z}_2^n$.
+Then let us consider 2 operations operating on individual bits:
 1. $x \oplus y$: The XOR operation. This is a binary operation which takes 2 bits and
-   returns 1 if the bits differ and 0 otherwise. This is the same as addition
-   modulo 2.
-2. $x \cdot y$: The AND operation. This is a binary operation which takes 2 bits and
+   returns 1 if the bits differ and 0 if they are equal. Note that this is the same as addition modulo 2.
+2. $x \cdot y$: The AND operation. This binary operation takes 2 bits and
    returns 1 if both bits are 1, otherwise it returns 0.
 
 | $x$ | $y$ | $x \oplus y$ | $x \cdot y$ |
@@ -201,29 +201,35 @@ individual bits of the register:
 | 1   | 0   | 1            | 0           |
 | 1   | 1   | 0            | 1           |
 
-Extending our previously defined register to a *shift register* is simple enough:
-To shift our bits around we just take each higher bit and move it 1 position down,
+> [!warning] TODO
+> Could do with a couple of examples what this exactly means. I.e. how does the arithmetic work, and why?
+
+The register is now extended to a *shift register*.
+This extension is simple enough:
+We just move the bits in the register around by taking each higher bit and shifting it 1 position down,
 dropping the lowest bit.
+Let's see how ticking this register now advances its state:
 
 > [!warning] TODO
 > insert the svelte LFSR component here with no feedback connections, but the shift downward arrows, step, animate & reset buttons
 
 
-Well. . . This is boring! We pretty quickly converge always the same value, 
-that is the 0 state. This does not seem random at all. To keep our shift register
-from always just discarding all information lets add the 3rd component, namely
-the *feedback*. The first idea is just looping the feedback back towards the
-first bit, as there we do not have a preceding bit from which we can obtain (new)
-information, while we discard information in the last. If we do this now we
-basically implemented the *bit roll* operation:
+Well... This is boring! We converge pretty quickly to the same value of 0 regardless of the initial state.
+This does not seem random at all. 
+To keep our shift register from always just discarding all information we will add the 3rd component,
+namely some *feedback*.
+The first idea is to just loop the discarded lowest bit back into the highest bit,
+as there we do not have a preceding bit from which we can obtain (new) information,
+while we discard information in the last.
+If we do this now we basically implemented the *bit roll* operation:
 
 <LFSR tapMask=0b100000 />
 
-Hmmm. . . At least we no longer always arrive at an empty register, but the
-sequence when the last bit lights up is very predictable. This is due to the
-fact that we see the information that we have will be repeated every $n$ steps 
--- it stays unchanged after all! Thanks to the low cycle count one can again
-pretty quickly spot the pattern produced by our current *feedback shift register*.
+Hmmm... At least we no longer always arrive at an empty register.
+But the sequence of when the last bit lights up is very predictable. 
+This is due to the fact that the information that we observe repeats every $n$ steps 
+-- each bit stays unmodified after all!
+Thanks to the low cycle count one can again pretty quickly spot the pattern produced by our current *feedback shift register*.
 To combat this we insert some *linear feedback*, by adding the feedback not
 only to the first bit, but also some intermediate bits:
 
@@ -232,54 +238,57 @@ only to the first bit, but also some intermediate bits:
 Unlike the last steps it might not be immediately obvious why this step has the
 name that it has. The naming comes from the fact that the XOR $\oplus$ operation
 we use to combine the feedback into the inner bits causes our bit states to be a
-linear combination of the previous bit states. This fact will also be what we
-use later to figure out the state from observations.
+linear combination of the previous bit states. This linearity is also the reason 
+why we can reconstruct the internal RNG state from just observations alone.
 
-There we have it! This is how one constructs a LFSR. Let's now take a look at
-how we can use this to reverse the state of the LFSR from only the outputs.
+Note that in all the cases above we considered only single bit outputs.
+It is common to instead just output the entire state as the resulting RNG call
+as a single integer instead.
+This then allows one to consider the number as a proper integer in $[0, 2^n-1]$
+producing random looking numbers.
 
-### LFSR<sup>-1</sup>
-Previously we started at a fixed state, i.e. with all bits set to either 0 or 1,
-and generated the subsequent states and corresponding outputs from those.
-However, what we actually care about is the inverse problem.
-Given some output observations can we figure out what state we started with?
-To figure out how we can do this let's substitute in variables $x_i$ for the bits instead of concrete values and track how the corresponding bits change:
+We now know how an LFSR gets constructed.
+In particular, given the state $x^{(t)}$ at time $t$ we now know how to:
+1. Generate the next state $x^{(t+1)}$.
+2. Generate corresponding output bits, either one at a time, or as a full integer value.
+
+### Inverting an LFSR
+Previously all examples started at a fixed state for $x$.
+I.e. these were states where all bits are set either to 0 or 1.
+From those we generated the subsequent states and corresponding outputs.
+However, to crack the PRNG what we actually care about is the *inverse* problem.
+Given some output observations $o$ can we figure out what state $x$ we started with?
+To figure out how we can do this, we use placeholder variables $x_i$ rather than concrete values for the bits and track how each corresponding bit changes:
 
 > [!warning] TODO
 > insert LFSR from above using variables here, best also with a list of
-equations which get generated for the last bit for example. This would allow me
-to show that we can insert any sequence of values there to obtain an initial state.
+> equations which get generated for the last bit for example. This would allow me
+> to show that we can insert any sequence of values there to obtain an initial state.
 
+We see that every bit is just a combination of the starting bit states.
+Either the bit states are just the state from the bit above, or it is the combination
+of 2 separate states.
+Note that whenever we observe $x_i \oplus x_i$ the $x_i$ cancels out, allowing us to remove it from the equation.
 
-> [!warning] TODO
-> this part reeeeally needs a rewrite, it does not flow well -> why the sudden *formal* introduction of the vector spaces? Is it really necessary?
+Moreover, I already teased the use of the *linear* property of the feedback we used above.
+In particular $(\mathbb{Z}_2, \oplus, \cdot)$ forms a *field* (see [Wikipedia: Field](https://en.wikipedia.org/wiki/Field_(mathematics))).
 
-Now, if you had an introductory course on linear algebra you also likely saw the
-formal definition of what a vector space. It is usually defined over a *field*
-$F$ of scalars and a set $V$ of vectors along with the scalar multiplication
-$\alpha \vec{v}$ and vector addition $\vec{u} + \vec{v}$ for corresponding
-scalars $\alpha \in F$ and vectors $\vec{u}, \vec{v} \in V$, while satisfying
-some conditions (see [Wikipedia: Vector Space](https://en.wikipedia.org/wiki/Vector_space#Definition_and_basic_properties)).
-While I personally was introduced to the topic of vector spaces in this fashion,
-afterwards I only ever saw them used in some special instantiations, and you
-might as well. Namely $F$ being either $\mathbb{R}$ or $\mathbb{C}$ and
-correspondingly $V = \mathbb{R}^n$ or respectively $V = \mathbb{C}^n$
+> [!warning] Field properties
+> The field properties are:
+> - *Associativity* (both $\oplus$ and $\cdot$): $a \oplus (b \oplus c) = (a \oplus b) \oplus c$ and $a \cdot (b \cdot c) = (a \cdot b) \cdot c$.
+> - *Commutativity* (both $\oplus$ and $\cdot$): $a \oplus b = b \oplus a$ and $a \cdot b = b \cdot a$.
+> - *Identity*: For $\oplus$ this is 0: $0 \oplus a = a$ and for $\cdot$ this is 1: $1 \cdot a = a$.
+> - *Additive Inverse*: For any $a$ we have a $-a$ such that $a + (-a) = 0$. Here $a = -a$.
+> - *Multiplicative Inverse*: For any $a \neq 0$ we have $a^{-1}$ such that $a \cdot a^{-1} = 1$ is trivial as the only other element is 1.
+> - *Distributivity*: $a \cdot (b \oplus c) = (a \oplus b) \cdot (a \oplus c)$.
+> These properties can easily be checked for $\mathbb{Z}_2$ with truth tables.
 
-However, the original definition is kept general on purpose! Through the fact
-that they require $F$ to exhibit *field* properties, we can substitute other
-algebraic structures in there which differ to the usual suspects. In this case
-we can use the so called *Gallois field* $\text{GF}(2) = \mathbb{Z}/2\mathbb{Z}$.
-
-This means that we can formulate the transition of a state from one vector
-$s^{(t)} \in \text{GF}(2)^n$ to the next state $s^{(t+1)} \in \text{GF}(2)^n$
-as a linear combination. Thus we can write each LFSR step as a matrix product:
-$$
-s^{(t+1)} = T s^{(t)}
-$$
-where $T \in \text{GF}(2)^{n \times n}$. Moreover, if you observe the
-construction of our LFSRs one can also notice that this transition matrix
-*needs* to be invertible (just by reversing all the edges, we can reverse each
-step, which makes each step invertible). 
+This field is commonly known as the *Gallois field* $\text{GF}(2) = \mathbb{Z}/2\mathbb{Z} = \mathbb{Z}_2$
+or the *modular arithmetic* mod 2.
+Using this *field* structure we can then also consider the *vector space* (see [Wikipedia: Vector Space](https://en.wikipedia.org/wiki/Vector_space#Definition_and_basic_properties)
+) spanning all values
+$\text{GF}(2)^n$ with the scalars from $\text{GF}(2)$ and the operators from the field
+applied pointwise to each coordinate.
 
 > [!note]- Gallois Field $\text{GF}(p)$
 > If $p \in \mathbb{N}$ is a prime number, then $\text{GF}(p) = \mathbb{F}_p = \mathbb{Z}/p\mathbb{Z}$ is a field.
@@ -296,21 +305,88 @@ step, which makes each step invertible).
 > \end{align*}
 > $$
 
-> [!check] Summary
-> In summary we can derive a set of linear equations for all the bits observed, as long as we can
-> track when random events occurred. This then can look something like the following:
-> $$ \begin{array}{cccccccc}
-> x_1 & + & x_2 & + & x_3 &   &     &= 1 \\
-> x_1 &   &     & + & x_3 &   &     &= 0 \\
->     &   & x_2 &   &     & + & x_4 &= 1 \\
-> x_1 & + & x_2 &   &     & + & x_4 &= 0
-> \end{array}$$
-> This equation system can then be solved with usual methods such as row
-> elimination which you can even remember from high school Maths. The important
-> thing here though is that we can compute the entire thing modulo 2 which means
-> that we have the following nice property: $x_i + x_i \equiv 0 = x_i - x_i$.
+Personally, after getting an introduction into linear algebra and the used vector spaces,
+I subsequently only saw them applied to either $\mathbb{R}^n$ or if spicy to $\mathbb{C}^n$.
+However, the original definition of a vector space is kept very generic on purpose!
+It allows *any* structure satisfying the necessary properties to be manipulated in the same way,
+allowing us to apply well know algorithms you maybe have only seen yet applied to systems described by 
+$\mathbb{R}^{m \times n}$ matrices to arbitrary matrices, regardless of the underlying field $F$.
+And as luck would have it, the previously defined operations XOR and AND on the bits span a *field*!
 
-<!-- If the above does not tell you much, don't worry. It basically states that we can setup a linear system of equations (that one thing from high school) -->
+Repeating what we saw before: We can formulate each individual transition as a *linear* combination of previous bit states.
+Since we can write the entire state as a vector of these bits, and each transition is *linear* itself,
+this means we can write the transition between the current state 
+$s^{(t)} \in \text{GF}(2)^n$ to the next state $s^{(t+1)} \in \text{GF}(2)^n$
+as a *matrix product*:
+$$
+s^{(t+1)} = T s^{(t)}
+$$
+where $T \in \text{GF}(2)^{n \times n}$. 
+Moreover, careful observation of the original construction of our LFSRs highlights that this transition matrix *needs* to be invertible.
+> [!info]- Invertability of $T$
+> Remember that $T$ originates from the construction of the LFSR.
+> Construct a new LFSR by differentiating the following two cases:
+> 1. The bit is just shifted from above, no XOR between.
+>    This step is reversible by just flipping the direction of the shift.
+> 2. The bit is a combination of both the upper bit and feedback bit. 
+>    Since the feedback bit is inserted into the highest bit without modification,
+>    this step can be reversed by XORing the bit state with the most significant bit
+>    (cancelling out the corresponding added state) and shifting it as though no modification happened.
+>
+> In effect this amounts to flipping the arrows in the above diagrams by 180.
+
+As such, for any given $T$ originating from an LFSR we know that $T^{-1}$ exists.
+This can then either be generated by the construction above, or alternative methods
+such as [Gaussian elimination](https://en.wikipedia.org/wiki/Gaussian_elimination).
+
+> [!info]- Gaussian Elimination on $\text{GF}(2)$
+> Usually for Gaussian elimination we transform the matrix into an upper triangular matrix.
+> However for $GF(2)$ we can immediately solve for the inverse matrix instead by the following pseudo code:
+> ```python
+> def invert(M):
+>   # Extend with the identity matrix on the right
+>   system = [M | I]
+>   # Iterate over all columns in the original M
+>   for row_idx, col in enumerate(system.M):
+>     # Find pivot row, which hasn't previously been applied
+>     pivot = system.get_row_where((1 in col) and (not chosen previously))
+>     # Move the pivot to the current row
+>     system.swap_row(pivot, system.row(row_idx))
+>     # Cancel all other rows with a 1 in the current column
+>     for row in system:
+>       row += pivot
+>   # Return the part which was previously the identity
+>   return system.I
+> ```
+
+Note that like the bits in the state vector, each individual entry in the matrix is a value in $\text{GF}(2)$,
+i.e. it's either 0 or 1.
+In particular this allows us to display this matrix as a bitmap, where a bright entry means a 1 and a dark pixel represents a 0.
+For the toy LFSRs we saw previously this looks as follows:
+
+> [!warning] TODO
+> Add an LFSR component here, joined with the transition matrix T.
+> Have the corresponding matrix entries highlight when hovering in the LFSR component.
+
+Now that we have seen a bunch of theory, we can actually apply it to the above code snippets.
+Focusing on a single LFSR component we have:
+```cpp
+a = (a << 12 ^ a >> 6) & 0x1fff ^ a >> 19 ^ a << 12;
+```
+for the first 2 bits we would have:
+$$
+\begin{aligned}
+a_{31}' &= \big(( a_{19} \oplus 0) \cdot 0\big) \oplus 0 \oplus a_{19}\\
+a_{30}' &= \big(( a_{18} \oplus 0) \cdot 0\big) \oplus 0 \oplus a_{18}\\
+&\hspace{18mm}\vdots
+\end{aligned}
+$$
+In total this will be $32$ equations per LFSR due to the 32 bit `uint32_t` size,
+with some equations in the lower bits being redundant mirrors of upper bits due to the construction of the LFSRs (see boost implementation).
+The full advancement matrices of the 3 LFSRs then look as follows:
+
+> [!warning] TODO
+> Add 3 side by side images here, one for each of the 3 LFSRs representing the matrices to be solved.
 
 ### Combining multiple LFSRs
 We've seen that we can solve the state of a single LFSR as a linear equation of
