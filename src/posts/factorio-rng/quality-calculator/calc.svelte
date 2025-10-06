@@ -17,7 +17,8 @@
 	] as Quality[];
 
 	let startQuality = $state(0);
-	let qualityBonusPercent = $state(24.8);
+	let qualityBonusPercentInput = $state(24.8);
+	let qualityBonusPercent = $derived(Math.max(qualityBonusPercentInput, 0));
 
 	let prob_thresholds = $derived.by(() => {
 		let thresholds = Array(qualities.length).fill(null);
@@ -81,8 +82,8 @@
 	<input
 		id="qualityPercentage"
 		type="number"
-		bind:value={qualityBonusPercent}
-		min="0"
+		bind:value={qualityBonusPercentInput}
+		min="-3276.8"
 		max="3276.7"
 		step="0.1"
 		class="quality-input"

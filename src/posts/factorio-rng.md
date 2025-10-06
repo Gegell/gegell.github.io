@@ -273,7 +273,7 @@ Note that whenever we observe $x_i \oplus x_i$ the $x_i$ cancels out, allowing u
 Moreover, I already teased the use of the *linear* property of the feedback we used above.
 In particular $(\mathbb{Z}_2, \oplus, \cdot)$ forms a *field* (see [Wikipedia: Field](https://en.wikipedia.org/wiki/Field_(mathematics))).
 
-> [!warning] Field properties
+> [!info] Field properties
 > The field properties are:
 > - *Associativity* (both $\oplus$ and $\cdot$): $a \oplus (b \oplus c) = (a \oplus b) \oplus c$ and $a \cdot (b \cdot c) = (a \cdot b) \cdot c$.
 > - *Commutativity* (both $\oplus$ and $\cdot$): $a \oplus b = b \oplus a$ and $a \cdot b = b \cdot a$.
@@ -289,7 +289,7 @@ Using this *field* structure we can then also consider the *vector space* (see [
 ) spanning all values
 $\text{GF}(2)^n$ with the scalars from $\text{GF}(2)$ and the operators from the field
 applied pointwise to each coordinate.
-
+<!-- 
 > [!note]- Gallois Field $\text{GF}(p)$
 > If $p \in \mathbb{N}$ is a prime number, then $\text{GF}(p) = \mathbb{F}_p = \mathbb{Z}/p\mathbb{Z}$ is a field.
 > 
@@ -303,7 +303,7 @@ applied pointwise to each coordinate.
 >  a+b      &\equiv c \mod p \iff \exists k \in \mathbb{Z}: a + b = c + kp \\
 >  a\cdot b &\equiv c \mod p \iff \exists k \in \mathbb{Z}: a\cdot b = c + kp
 > \end{align*}
-> $$
+> $$ -->
 
 Personally, after getting an introduction into linear algebra and the used vector spaces,
 I subsequently only saw them applied to either $\mathbb{R}^n$ or if spicy to $\mathbb{C}^n$.
