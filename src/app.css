@@ -133,10 +133,14 @@ code {
     font-size: var(--font-size-1);
 }
 
+button:hover {
+    --_highlight-size: none;
+}
+
 .prose {
     text-align: left;
     @media (min-width: 768px) {
-        text-align: justify;
+        text-align: left;
     }
 
     margin-bottom: var(--size-12);
@@ -191,6 +195,7 @@ code {
     }
 }
 
+.prose img,
 .shiki,
 .callout {
     border-radius: var(--radius-3);
