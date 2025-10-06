@@ -391,12 +391,12 @@ The full advancement matrices of the 3 LFSRs then look as follows:
 ### Combining multiple LFSRs
 We've seen that we can solve the state of a single LFSR as a linear equation of
 the form $Ax=b$ where all components are computed modulo 2. Remember however that
-the full RNG result is determined by 3 independent LFSRs whos' output we XOR together.
+the full RNG result is determined by 3 independent LFSRs whose output we XOR together.
 We can model this as having 3 different states $s_1, s_2, s_3 \in \text{GF}(2)^n$
 each with a corresponding transition matrix $T_1, T_2, T_3$. If we then stack all
 these state vectors together, we obtain a big vector 
 $s = [s_1 \quad s_2 \quad s_3]^\top$ describing the entire state at once.
-For this new state vector we can again derive a transition matrix we know invertible:
+For this new state vector we can again derive a transition matrix which we know to be invertible:
 $$
 s^{(t+1)} =
 \begin{bmatrix}
@@ -621,13 +621,13 @@ $$o^{(t)}, o^{(t+1)}, \dots, o^{(t+87)} \in GF(2)$$
 
 A single unit measuring then can look as follows:
 
-![A single entropy measurement unit.](factorio-rng/img/ingame_entropy_read_single.png)
+![A single entropy measurement unit.](./factorio-rng/img/ingame_entropy_read_single.png)
 
 This unit will provide us with 2 bits.
 To reconstruct the state in a speedy manner, we copy this singular unit 44 times, yielding 88 total bits.
 In total this then comes out to:
 
-![All the entropy measurement units together.](factorio-rng/img/ingame_entropy_read_all.png)
+![All the entropy measurement units together.](./factorio-rng/img/ingame_entropy_read_all.png)
 
 ### Determining the current state
 This means that we only take the first row from the linear equation defined above for computing observations from the state:
@@ -679,7 +679,7 @@ Hence the skip ahead equation can be implemented in parallel for all $k$ steps a
    as this is a fast reduction algorithm for prefix sums (which this is).
 
 For a single LFSR this then looks as follows:
-![Parallel look-ahead for a single LFSR](factorio-rng/img/ingame_multi_step_single.png)
+![Parallel look-ahead for a single LFSR](./factorio-rng/img/ingame_multi_step_single.png)
 
 > [!warning] TODO:
 > Mark the 2 sections described above in the given image
@@ -750,7 +750,7 @@ And for each call we can compute the expected quality level by just comparing ag
 all the thresholds, which stay constant during the game. Thus they can be precomputed
 in-game with some arithmetic combinators.
 
-![Computing the quality levels from RNG states in game.](factorio-rng/img/ingame_quality_compute.png)
+![Computing the quality levels from RNG states in game.](./factorio-rng/img/ingame_quality_compute.png)
 
 The calculator below shows the required threshold for each quality level, as well
 as the expected amount of each quality level for a given bonus.

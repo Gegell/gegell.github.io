@@ -10,6 +10,7 @@ import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import rehypeToc from '@stefanprobst/rehype-extract-toc';
 import rehypeTocExport from './src/lib/rehype-toc-export.js';
+import relativeImages from 'mdsvex-relative-images';
 
 const highlighter = await createHighlighter({
 	themes: ['ayu-dark', 'min-light'],
@@ -20,7 +21,8 @@ const highlighter = await createHighlighter({
 const mdsvexOptions = {
 	extension: '.md',
 	remarkPlugins: [
-		remarkMath
+		remarkMath,
+		relativeImages
 	],
 	rehypePlugins: [
 		rehypeCallouts,
