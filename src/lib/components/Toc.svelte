@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Toc } from '@stefanprobst/rehype-extract-toc';
-	import { RiMenuFill } from 'svelte-remixicon';
+	import RiMenuFill from 'svelte-remixicon/RiMenuFill.svelte';
 	import { fly, slide } from 'svelte/transition';
 
 	let { headings = [] }: { headings?: Toc } = $props();

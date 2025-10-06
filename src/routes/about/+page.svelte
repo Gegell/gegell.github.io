@@ -1,5 +1,7 @@
 <script lang="ts">
-	import { RiBlueskyFill, RiGithubFill, RiMailSendFill } from 'svelte-remixicon';
+	import RiBlueskyFill from 'svelte-remixicon/RiBlueskyFill.svelte';
+	import RiGithubFill from 'svelte-remixicon/RiGithubFill.svelte';
+	import RiMailSendFill from 'svelte-remixicon/RiMailSendFill.svelte';
 
   // Use atob to decode email address from base64 
   // -> Don't store email addresses in plain text to avoid crawlers

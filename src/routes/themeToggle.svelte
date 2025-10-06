@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { RiSunFill, RiMoonClearFill } from 'svelte-remixicon';
+	import RiSunFill from 'svelte-remixicon/RiSunFill.svelte';
+	import RiMoonClearFill from 'svelte-remixicon/RiMoonClearFill.svelte';
 	import { theme, toggleTheme } from '$lib/theme';
 </script>
 

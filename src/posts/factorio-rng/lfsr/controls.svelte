@@ -1,6 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { RiPauseFill, RiPlayFill, RiResetLeftFill, RiSkipForwardFill } from 'svelte-remixicon';
+	import RiPauseFill from 'svelte-remixicon/RiPauseFill.svelte';
+	import RiPlayFill from 'svelte-remixicon/RiPlayFill.svelte';
+	import RiResetLeftFill from 'svelte-remixicon/RiResetLeftFill.svelte';
+	import RiSkipForwardFill from 'svelte-remixicon/RiSkipForwardFill.svelte';
 
 	const speed_multipliers = [1, 2, 5];
 	const base_speed = 500;
