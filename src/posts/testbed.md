@@ -23,3 +23,9 @@ Testing a wide div with overflow -- representing a long expression using katex.
 <div style="max-width: 100%; overflow: auto;">
 <div style="width: 123%; background:red;">This is a wide div</div>
 </div>
+
+<!-- ![expected bits plot](./factorio-rng/img/expected_bits_plot.svg) -->
+<script>
+    import rngplot from "./factorio-rng/img/expected_bits_plot.svg?raw"
+</script>
+{@html rngplot}
