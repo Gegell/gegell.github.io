@@ -14,6 +14,7 @@ showToc: true
 <script>
   import LFSR from './factorio-rng/lfsr'
   import QualityCalculator from './factorio-rng/quality-calculator'
+  import rngplot from "./factorio-rng/img/expected_bits_plot.svg?raw"
 </script>
 
 
@@ -580,30 +581,41 @@ $$
 $$
 
 This means we can expect a total of 0.098 bit each successful crafting cycle!
-In fact, what we just calculated is a discretized version of the
-[Shannon Entropy](https://en.wikipedia.org/wiki/Entropy_(information_theory)) as
-if we observe the pattern a bit longer we might notice that the number of bits
+If we observe the pattern a bit longer we might notice that the number of leading bits
 obtained in each positive case (i.e. where the probability is 0.7%) is
-$\lfloor-\log_2(p)\rfloor$ where $p$ is the probability of each event occurring.
-Similarly the same holds for $p > 0.5$ as there the result is just 0 bits observed.
-Thus we have a measure which we can apply to each recipe in the game to find the recipe with the most information per craft.
+$\lfloor-\log_2(p)\rfloor$ where $p$ is the probability of the event occurring.
+A similar thing holds for $p > 0.5$ where the result is instead leading 0 bits observed.
+This allows us to compute the expected number of bits we measure for an event with probability $p$.
+In whole, it is writable as:
+$$
+\mathbb{E}[\text{bits}] = p \left\lfloor -\log_2(p) \right\rfloor + (1-p) \left\lfloor -\log_2(1-p) \right\rfloor
+$$
+This function is also shown below.
+The plot induces the following facts:
+- The event which has the highest expected number of observed bits is situated at the event 50% split.
+  At that point we can in fact always observe the most significant bit.
+- While events closer to 0/1 allow us to infer more bits whenever they succeed, 
+  the likelihood of the events occurring diminishes too fast,
+  decreasing the total number of expected observed bits per event instead.
 
-> [!warning] TODO
-> add a graph of the discretized shannon entropy here to show that .5 is the optimal probability for
-> obtaining information.
+<!-- Expected bits plot, embed svg into this page to allow style reusage - needs to be imported above. -->
+{@html rngplot}
 
+In fact, what we just calculated is a discretized version of the
+[Shannon Entropy](https://en.wikipedia.org/wiki/Entropy_(information_theory)).
+As such, we have a measure applicable to each recipe in game allowing us to find the recipe yielding the most information per craft.
 > [!warning] TODO
 > insert the table here which shows all the recipe entropy values. 
-
 
 As we can see there are *waaay* better recipes to utilize for extracting information from the game.
 One might think that [scrap recycling](https://wiki.factorio.com/Scrap) would yield a lot of information,
 but is with an entropy of 2.05 only slightly above recipes like recycling [repair packs](https://wiki.factorio.com/Repair_pack) which have entropy of 2.
 This is due to the fact that recycling repair packs (and similar recipes with ingredient count = 4n+2)
-yields exactly one bit of information of the RNG output in either case,
-as it is a perfect 50 / 50 split on whether the item will be created or not.
+yield exactly one bit of information of the RNG output in either case,
+as it creates a perfect 50 / 50 split on whether the additional item will be created or not.
 There are obviously alternative recipes such as the [oil refinery](https://wiki.factorio.com/Oil_refinery)
-which has an entropy of 4.5 however is also quite a bit more expensive and slower than doing repair pack recycling.
+which has an entropy of 4.5.
+These however are also quite a bit more expensive and slower than doing repair pack recycling.
 
 ## Actual Implementation
 To actually implement the reversal and manipulation of the RNG I've split the computation into the following steps:
@@ -615,19 +627,49 @@ To actually implement the reversal and manipulation of the RNG I've split the co
 As already alluded to in [[#LFSR but backwards]] we will need to compute a matrix vector product for both of these steps.
 Now the question is where do we get the matrices and where do we get the vectors from?
 
-The current state will be computed from *observations* made when recycling [repair packs](https://wiki.factorio.com/Repair_pack). Each recycling operation will yield exactly 2 bits of information - 1 for each item. This in turn means that we require 88/2=44 recycling operations to have enough information to fully reconstruct the state.
-Now as we are only interested in the top most bit of each observations we have our 88 observations as: 
+### Sampling the RNG
+The current state will be computed from *observations* made when recycling [repair packs](https://wiki.factorio.com/Repair_pack). 
+Each recycling operation will yield exactly 2 bits of information - 1 for each item.
+This in turn means, that we require $88/2=44$ recycling operations to have enough information to fully reconstruct the state.
+As each result provides us with exactly one bit of information - the top most bit of the RNG call - the 88 observations can be written as: 
 $$o^{(t)}, o^{(t+1)}, \dots, o^{(t+87)} \in GF(2)$$
 
 A single unit measuring then can look as follows:
 
 ![A single entropy measurement unit.](./factorio-rng/img/ingame_entropy_read_single.png)
 
-This unit will provide us with 2 bits.
-To reconstruct the state in a speedy manner, we copy this singular unit 44 times, yielding 88 total bits.
-In total this then comes out to:
+It has the following stages:
+1. The inserter will move exactly 1 repair pack into the recycler.
+2. The recycler will recycle the item, and upon completion query the RNG for 2 new integers, determining whether extra items (either 0 or 1) are produced.
+3. Depending on whether the items are produced or not, they are placed into the *provider chest*.
+   This chest is set to read the contents, providing the observation to the red wire.
+4. These observations directly correspond to the top most observed bits $o^{(t+k)}$ due to the 50% chance of output.
+   Further processing occurs through the decider combinators below.
+5. Before the next call can occur, we clear the provider chest by making use of the *trash unrequested* option, alongside the *enable/disable* signal we can send over the green wire connected to it, which temporarily pauses the auto trashing behavior.
+
+The above unit will therefore always provide us with 2 bits of information.
+To reconstruct the full state quickly, we copy this singular unit 44 times, yielding a total of 88 bits.
+This then comes out to:
 
 ![All the entropy measurement units together.](./factorio-rng/img/ingame_entropy_read_all.png)
+
+Of note here is the manner in which the individual units are queried.
+There are 2 approaches:
+1. Either each is triggered with a 1 tick delay, ensuring that they are always queried in the same order.
+   This however requires us to not have *any* other RNG running in the meantime,
+   as RNG calls which occur in between will mess up the expected ordering.
+2. Alternatively, we can use same tick shenanigans.
+   By splitting the red wire connecting the inserters with a 1 tick delay combinator in front of every inserter this can be achieved.
+   Connecting the inputs to the delay first creates a shared circuit network.
+   Then sequentially connecting all outputs of the delays to the corresponding inserters will create a standalone network for each inserter.
+   As the game needs to update the networks in some manner, I bank on the fact that
+   it will iterate through the list ordered by the network ID.
+   This ensures that the RNG calls all happen in the same tick, with no ticks interfering.
+   Note that the wire construction can also be done using a 2 stage blueprint.
+   > [!note]
+   > While the same tick stuff seems to work in practice, I have not actually confirmed that this is how the game works under the hood.
+   > It can be brittle at times, as it seems to arbitrarily break at random times.
+   > In those cases simply reconstructing the wires allows it to work again.
 
 ### Determining the current state
 This means that we only take the first row from the linear equation defined above for computing observations from the state:
@@ -636,7 +678,7 @@ P_1 \underbrace{\begin{bmatrix}T_1^k & 0 & 0 \\ 0 & T_2^k & 0 \\ 0 & 0 & T_3^k\e
 \begin{bmatrix}s_1^{(t)} \\ s_2^{(t)} \\ s_3^{(t)}\end{bmatrix}
 = o^{(t+k)}
 $$
-with $P_1 = [p_{1i}] \in GF(2)^{96 \times 1}$ which is the first row of the matrix $P=\begin{bmatrix}I&I&I\end{bmatrix}$ . Now let 
+with $P_1 = [p_{1i}] \in GF(2)^{96 \times 1}$ which is the first row of the matrix $P=\begin{bmatrix}I&I&I\end{bmatrix}$. Now let 
 $$A_k = P_1 T^k \in \text{GF}(2)^{96 \times 1}$$
 then we need to solve the following equation:
 $$

@@ -49,7 +49,7 @@ dyadics = []
 for n in range(1, max_power + 1):
     dyadics.append(2**-n)
     dyadics.append(1 - 2**-n)
-dyadics = np.array(sorted(set(dyadics)))
+dyadics = np.array(sorted(set(dyadics)))  # type: ignore
 
 # Remove dyadic points from plot line by inserting NaNs (to break vertical jumps)
 p_plot = p.copy()

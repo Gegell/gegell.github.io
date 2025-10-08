@@ -4,3 +4,5 @@ Wube
 decompilation
 Ghidra
 Gallois
+combinator
+combinators
