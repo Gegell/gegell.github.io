@@ -442,7 +442,7 @@ $$
 o^{(t+2)} = \begin{bmatrix}T_1^2 & T_2^2 & T_3^2\end{bmatrix}s^{(t)}
 $$
 
-Thus we realize that if we observe 3 states in a row we obtain the following
+Thus, we realize that if we observe 3 states in a row we obtain the following
 system of equations:
 
 $$
@@ -451,7 +451,7 @@ $$
 $$
 
 In other words: To figure out what the state of the PRNG registers was at any
-timestep $t$, we need to observe the results of 3 consecutive calls and solve
+time step $t$, we need to observe the results of 3 consecutive calls and solve
 the linear system of equations: 
 $$
 s^{(t)} = A^{-1} \begin{bmatrix}o^{(t)} \\ o^{(t+1)} \\ o^{(t+2)}\end{bmatrix}
@@ -491,52 +491,69 @@ solver. For the observations I used the Factorio LUA API to generate 3 consecuti
 random numbers. This could be used to determine the internal state already &
 predict future RNG outputs see: [First recording of the method working](https://youtu.be/4DblzCYfArU)
 
-However when we try to implement it with only the resources available to us
-within Factorio we still have to overcome 2 major theoretical hurdles:
-1. We need the result of **consecutive calls**.
-2. It requires us to observe the **full result width** of the PRNG calls for our observations, i.e. all 32 bits at once.
+Before we try to implement it with only the resources available to us
+in game, we still have to inspect two theoretical hurdles:
+1. Currently we need the result of **consecutive calls**.
+   These might not be available to us.
+2. Moreover, the **full result width** i.e. all 32 bits at once of the PRNG calls are required for our observations.
+   With pure game mechanics these are not necessarily observable.
 
-Let's take a look at both of these issues.
+As such, let's take a look at both of these issues, and how we can address them.
 
 ### Consecutive calls
 In the previous derivation we utilized the states $s^{(t)}$, $s^{(t+1)}$ and $s^{(t+2)}$
-which would indeed correspond to only consecutive calls.
-There are 2 ways to tackle this:
+which correspond to using the full width of 3 *consecutive* calls.
+As we however are not necessarily the only thing in the simulation requesting
+RNG values we need to consider a non isolated case.
+There are several ways to tackle this:
 1. If we have a method of counting the calls made between the calls we can skip
-   a couple of observations by generalizing the result above to use $o^{(t+n)} = T^{n} s^{(t)}$,
-   where $n$ is the number of calls we skipped until the next measurement. We
-   will come back to this later when discussing the Feasibility
-   of actually exploiting the PRNG in game.
-2. Ensure that our measurements occur consecutively. This can be done in game by
-   carefully placement of the *Entropy Generators* (e.g. the things which will
-   actually call to the RNG). If we build them all consecutively (i.e. no other
-   *Entropy Generators* during that time) and ensure that they all query the RNG
-   in the same game tick (e.g. by feeding the Entropy generators some items in
-   the same tick).
-   The game will then iterate over all buildings (as far as I can tell in reverse
-   order) calling the respective update function on each of them. Once it comes
-   to our *Entropy Generators* which should lie adjacent to each other in the
-   update loop, it will update one after the other, without any outside sources
-   generating interfering calls to the RNG.
-> [!warning] TODO
-> fix the comment on update order, does not seem to directly work like this 
+   the non observed results by generalizing the previous result to use $o^{(t+n)} = T^{n} s^{(t)}$ instead,
+   where $n$ is the number of calls we skipped until the next measurement.
+2. Alternatively, we try to force the measurements to occur consecutively.
+   This can be done by disabling all other sources in game which can interfere
+   with the measured calls, doing our necessary calls in order and computing / manipulating from there.
+3. Building on this, the last considered variant ventures into *sub-tick mechanics*.
+   Every 1/60th of a second, the game performs an update step, aka a *tick*.
+   Withing this tick all the simulation mechanics run in a fixed order.
+   One of the triggered mechanisms is of course the creation of the crafting results within
+   all machines finishing their item crafting cycle.
+   If we now can harness the order in which the machines queue the item creation events,
+   placing our *entropy generators* in a consecutive block in this queue,
+   we ensure that the RNG calls are gapless, ensuring proper state reconstruction can occur.
 
+For my implementations I chose to pursue both option 2 and 3.
+The former, as it does not rely on internal update orders, meaning it should *always*
+work (as long as the RNG does not change).
+Meanwhile in theory, the latter approach allows for faster state readout and more
+robustness against outside extraneous calls.
+In practice however, it appears somewhat *flaky*, breaking at seemingly arbitrary times.
+
+<!-- 
+> [!note] On the Update Order
+> Initially I believed the machines to update in reverse placement order (i.e. newest first).
+> This was confirmed by pausing the game and manually placing items into the input slots,
+> ensuring the machines start in the same tick.
+> Neither position (cross chunk, nor tile position) nor player insertion order
+> influenced the order.
+>
+> Later however, I discovered that different entities (inserters) placing items into
+> the machines lead to a different (seemingly inconsistent) order.
+> One thing I found which stabilizes this ordering is using the update order of
+> separate circuit networks. As far as I can tell, they are updated in sequence
+> of ascending network IDs (visible in the circuit connection page).
+-->
 
 ### Full result width
 For our *Entropy Generators* we will use crafting recipes which have some
 randomization in their outputs.
-However when we measure such an output, we do not obtain information about the
-entire PRNG call. Instead the only thing we *can* measure are some simple
+However, when we measure such an output, we do not obtain information about the
+entire PRNG call. Instead, the only thing we *can* measure are some simple
 questions about the output, depending on the chosen method. Some examples are:
-- The number of output items. This can vary in 2 cases:
-	1. It is a recipe which yields non-integer item stacks - e.g. think of the
-         new-ish [recycling](https://wiki.factorio.com/Recycler) recipes. They
-         will return 25% of the items required to craft a single input item or
-         the item itself incase it is a self-recycle recipe.
-	2. It is a recipe with inherently random outputs - e.g. think of the
-	   [uranium processing](https://wiki.factorio.com/Uranium_processing).
-	   Here we have a 0.7% chance of producing a U-235 and a 0.7% chance of
-         *not* producing a U-238.
+- The number of output items. It involves randomness if either
+  the recipe yields non-integer item stacks (e.g. [recycling](https://wiki.factorio.com/Recycler) recipes,
+  which return 25% of the items required to craft a single input item or the item itself in case it is a self-recycle recipe),
+  **or** it is a recipe with inherently random outputs (e.g. [uranium processing](https://wiki.factorio.com/Uranium_processing),
+  where there is a 0.7% chance of producing a U-235 and a 0.7% chance of *not* producing a U-238).
 - The quality level of the output. We can measure if it rose in level,
   and if yes by how many.
 
@@ -546,18 +563,17 @@ I started this project). The thing to realize is that answering any of these
 questions yields us only information about some of the *top bits* of the RNG
 roll result.
 
-Let us consider the example of [refining uranium ore into U235 and U238](https://wiki.factorio.com/Uranium-235).
+Let's stick with the example of refining uranium ore into U235 and U238.
 For this we have 2 production results:
 - U238 occurs with 99.3% probability as a result and
 - U235 with a 0.7% chance.
 
-Further more, considering in which context the above code `collectMaterial` is
-executed, we can notice that for a single crafting cycle we already consume 2
-**subsequent** RNG calls. Moreover, due to these chances being both quite low /
-high we gain important knowledge whenever a crafting cycle completes in a certain
-fashion. The resulting item gets generated if the respective inequality holds,
+<!-- TODO: maybe add the `collectMaterials` code here -->
+To generate these 2 outputs, the RNG is queried twice by a single result,
+generating 2 subsequent RNG calls.
+As these chances being both quite low / high we gain important knowledge whenever the low probability event occurs. 
+The resulting item gets generated if the respective inequality holds,
 where $r_i \in [0, 2^{32}-1]$ is the computed RNG roll:
-
 $$
 \begin{alignat}{}
 r_1 \leq \left\lfloor 0.993 \cdot 2^{32} \right\rfloor &=\;& 4\,264\,902\,524_{10} &&= 11111110\ 00110101\ 00111111\ 01111100_2\\
@@ -566,7 +582,7 @@ r_2 \leq \left\lfloor 0.007 \cdot 2^{32} \right\rfloor &=\;&     30\,064\,771_{1
 $$
 
 In particular: If U238 **was not** generated, we know that the first 7 bits are 1 and if U235 **was** generated then the first 7 bits were 0.
-Otherwise, afaik we have no real knowledge about the generator.
+Otherwise, we have no real knowledge about the generator / the roll bits.
 
 Cool! But which recipe will yield us the highest amount of information each time it completes?
 As the more information we obtain with a single crafting cycle, the fewer crafts we require and the faster we can determine the internal state.
@@ -625,7 +641,7 @@ To actually implement the reversal and manipulation of the RNG I've split the co
 4. Calculating corresponding **quality levels** for each future call
 
 As already alluded to in [[#LFSR but backwards]] we will need to compute a matrix vector product for both of these steps.
-Now the question is where do we get the matrices and where do we get the vectors from?
+Now the question is where do we get the matrices, and where do we get the vectors from?
 
 ### Sampling the RNG
 The current state will be computed from *observations* made when recycling [repair packs](https://wiki.factorio.com/Repair_pack). 
@@ -666,10 +682,11 @@ There are 2 approaches:
    it will iterate through the list ordered by the network ID.
    This ensures that the RNG calls all happen in the same tick, with no ticks interfering.
    Note that the wire construction can also be done using a 2 stage blueprint.
-   > [!note]
-   > While the same tick stuff seems to work in practice, I have not actually confirmed that this is how the game works under the hood.
-   > It can be brittle at times, as it seems to arbitrarily break at random times.
-   > In those cases simply reconstructing the wires allows it to work again.
+
+> [!note] Note - Regarding the Same Tick Behavior
+> While the same tick stuff seems to work in practice, I have not actually confirmed that this is how the game works under the hood.
+> It can be brittle at times, as it seems to arbitrarily break at random times.
+> In those cases simply reconstructing the wires allows it to work again.
 
 ### Determining the current state
 This means that we only take the first row from the linear equation defined above for computing observations from the state:
