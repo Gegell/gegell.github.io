@@ -28,9 +28,11 @@ Testing a wide div with overflow -- representing a long expression using katex.
 <script>
     import rngplot from "./factorio-rng/img/expected_bits_plot.svg?raw"
     import Matrix from "./factorio-rng/matrix"
+    import Solver from "./factorio-rng/solver/solver.svelte"
 </script>
 {@html rngplot}
 
 <Matrix src="./factorio-rng/img/matrix_fwd_1_mag.png"/>
+<Solver />
 
 <img src="./factorio-rng/img/matrix_fwd_1.png" style="image-rendering: crisp-edges" width="288px">
