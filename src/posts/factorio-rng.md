@@ -689,39 +689,65 @@ There are 2 approaches:
 > In those cases simply reconstructing the wires allows it to work again.
 
 ### Determining the current state
-This means that we only take the first row from the linear equation defined above for computing observations from the state:
+As the units each produce only a single bits as a result, we need to apply the same strategy as before.
+This time though, we only use the first row of the linear equation defined above for computing observations from the state:
 $$
 P_1 \underbrace{\begin{bmatrix}T_1^k & 0 & 0 \\ 0 & T_2^k & 0 \\ 0 & 0 & T_3^k\end{bmatrix}}_{T^k}
 \begin{bmatrix}s_1^{(t)} \\ s_2^{(t)} \\ s_3^{(t)}\end{bmatrix}
 = o^{(t+k)}
 $$
-with $P_1 = [p_{1i}] \in GF(2)^{96 \times 1}$ which is the first row of the matrix $P=\begin{bmatrix}I&I&I\end{bmatrix}$. Now let 
-$$A_k = P_1 T^k \in \text{GF}(2)^{96 \times 1}$$
-then we need to solve the following equation:
+with $P_1 = [p_{1i}] \in GF(2)^{96 \times 1}$ which is the first row of the matrix $P=\begin{bmatrix}I&I&I\end{bmatrix}$. 
+If we now let $A_k = P_1 T^k \in \text{GF}(2)^{96 \times 1}$ be the matrix which denotes performing $k$ RNG steps and finally observe the topmost bit,
+then we can write the observations we gather above to follow the subsequent equation:
 $$
 \begin{bmatrix}A_0\\\vdots\\A_{87}\end{bmatrix}
 \begin{bmatrix}s_1^{(t)} \\ s_2^{(t)} \\ s_3^{(t)}\end{bmatrix}
 =
-\underbrace{A\, T^{-88}}_{A':=} s^{(t+88)}
+A s^{(t)}
 = 
 \begin{bmatrix}o^{(t)} \\ \vdots \\ o^{(t+87)}\end{bmatrix}
 $$
-This means that when solving $A's^{(t')}=o^{(t'-88,\dots,t'-1)}$ we compute the next to be internal RNG state from the previously done observations. Note that we use the inverse of the transition matrices $T_i^{-1}$ here, which we know to exist due to the construction of the LFSR (at least for the most significant bits).
-After computing matrix $A'$ in python it turns out it is invertible as well (for the 88 bits which are linearly codependent) so that we can precompute $A'^{-1} \in GF(2)^{88 \times 96}$ to be used in Factorio. To do so, remember the fact that any matrix vector product can be seen as a weighted sum of the columns of the matrix weighed by the entries in the vector. In this case, as we are computing in $GF(2)$, the vector values are either 0 or 1, while the sum reduces to an XOR over all the weighted vectors:
+Now since we already consume the next 88 calls through our observation it would be beneficial to instead calculate the state the RNG is at after our observation, not before.
+This can be achieved by making use of the inverse transition matrix $T^{-1}$ which causes some shift in the time index, creating a new matrix $A'$:
+$$
+A s^{(t)} =
+A\, T^{-88} s^{(t+88)} =
+A' s^{(t+88)}
+$$
+Shifting the time $t$ to also be relative to the next RNG call, instead of the start of measurement we then have that by solving $A's^{(t')}=o^{(t'-88,\dots,t'-1)}$ we compute the next to be internal RNG state from the previously done observations.
+Note that as the transition matrices $T_i^{-1}$ exist (due to construction of the LFSRs) it does not change if we solve by applying $A$ or $A'$.
+
+Now since there are only 88 bits which are actually linearly codependent, we cannot compute a full inverse.
+However, a pseudo-inverse will suffice.
+Especially since we are interested in the states after -- for which the lowest bits are entirely described by the MSB.
+The really neat thing however is that matrix $A$ and likewise $A'$ does not depend on any dynamic state.
+As such $A'^{-1} \in GF(2)^{88 \times 96}$ can precomputed in python to be subsequently used in Factorio. 
+
+Hence we only need to implement a matrix vector multiply in $GF(2)$ in game.
+To do so, remember the fact that any matrix vector product can be seen as a weighted sum of the columns of the matrix weighed by the entries in the vector:
+$$
+Ax = \sum_{k=1}^n x_k [A]_k = x_1 \overset{\rightarrow}{a}_1 + \dots + x_n \overset{\rightarrow}{a}_n
+$$
+In this case, as we are performing our computations in $GF(2)$, all values are either 0 or 1, meaning the multiply can be represented with a simple conditional, while the sum is substituted with an XOR over all the weighted vectors:
 $$
 s^{(t+88)} = \bigoplus_{k=0}^{87} o^{(t+k)} \cdot [A'^{-1}]_k
 $$
 Here $[A'^{-1}]_k$ is the $k$-th column of $A'^{-1}$ while $o^{(t+k)}$ is the $k$-th bit observation performed.
 In practice this equation is computed in 2 parts:
-1. The pointwise scalar vector multiplication is done via a *decider combinator* (either the bit was observed or not), if it was (= 1) then the column is output, else it is not.
+1. The pointwise scalar vector multiplication of $o^{(t+k)} \in \{0, 1\}$ and vector $[A'^{-1}]_k$ is done via a *decider combinator*. If it was observed (= 1) then the column is output and implicitly accumulated, else it is not.
 2. XOR of all the vectors via implicit summing. The vectors in $A'$ all contain only 0 or 1, meaning taking the sum over all included vectors, and finally extracting only the last bit of the sum is equivalent of taking the XOR over all of them. This is done by wiring the decider outputs all together and merging them in a single *arithmetic combinator*.
 
+> [!warning] TODO:
+> need to insert an image of the actual implementation in the game (e.g. sum / merge to single int32 value with 3 combinators).
+
 ### Looking into the future
-We perform a similar actions to compute the future states of the individual LFSRs.
+We perform a similar action to compute the future states of the individual LFSRs.
 However, as all LFSR states require fewer than 32 bits, we can store the lookup table in a more compact fashion.
-For each LFSR we compute the following:
-$$T^ks^{(t)} = s^{(t+k)}$$
-This is computed for $k=1,2,\dots,256$, where $T$ and $s$ are different between the 3 sub LFSRs.
+For each LFSR we need to compute the following:
+$$
+T^ks^{(t)} = s^{(t+k)}
+$$
+This is computed for $k=1,2,\dots,N$, where $T$ and $s$ are different between the 3 sub LFSRs.
 From this we can again rewrite these matrix vector multiplications as:
 $$
 s^{(t+k)} = \bigoplus_{j=1}^{32} s^{(t)}_j \cdot [T^k]_j
@@ -732,10 +758,11 @@ Hence the skip ahead equation can be implemented in parallel for all $k$ steps a
    vectors will either include all the vectors in the corresponding $k$-th state or not,
    thus we can implement this via a *decider combinator* again.
 2. Now we have 32 different 32 bit values which need to be XORed together.
-   Unlike before we cannot utilize the implicit addition here, but instead have
-   to use more *arithmetic combinators*.
+   Unlike before we cannot utilize the implicit addition here, 
+   as the vectors are now not represented by 32 different signals but instead via a single 32 bit signal value. 
+   Thus we have to use more *arithmetic combinators*.
    I've opted to use a *binary tree* to merge 2 bits using XOR together,
-   as this is a fast reduction algorithm for prefix sums (which this is).
+   as this is a known fast reduction algorithm for prefix sums (which this is).
 
 For a single LFSR this then looks as follows:
 ![Parallel look-ahead for a single LFSR](./factorio-rng/img/ingame_multi_step_single.png)
@@ -818,8 +845,39 @@ we always upgrade, which is indicated by placing the thresholds in brackets.
 
 <QualityCalculator/>
 
+### Adapters
+Yippee, we now can compute the threshold for RNG calls before they even occur in game.
+Now the question is what can we do with that?
+I have by now experimented with several -- what I call -- adapters,
+which take in these predictions, and do some funny stuff with them.
 
-## Feasibility
+Beginning with the first that I've implemented:
+> [!warning] TODO: Add yt video of first "next up" method
+
+It takes the sequence of future output qualities, and displays them next to the assembler,
+similar to the "Next Up Pieces" queue in *Tetris*.
+Each time a craft is completed, it advances the window into the future outputs by one,
+keeping the display relevant and on edge all the time.
+
+The next one was the following:
+> [!warning] TODO: Add yt video of "sort quality"
+
+This one takes the same list, but instead assigns only a single crafter to fabricate the next item.
+The assembler which is selected depends on the next output quality.
+In turn this leads to the 5 assemblers outputting the items in a sorted fashion,
+where each belt only ever carries a single type of quality, ordered from left to right in increasing quality.
+
+Finally the goal that I've been interested from the get go:
+> [!warning] TODO: Add yt video of "automated legendary"
+
+This method encapsulates the entire prediction and crafting loop into a closed system, 
+which can do the entire thing (predict and craft) autonomously.
+It involved additional work to calculate how many items need to be scrapped in between crafts to skip to the relevant RNG call,
+as well as enqueuing these skip counts from the predicted raw RNG results which turn sparse after thresholding,
+together with feeding the future RNG predictions back into it self to extend the time horizon. 
+
+
+## Limitations
 Now to the important part, that you may be wondering about:
 
 <div style="text-align:center;">
