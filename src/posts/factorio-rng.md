@@ -25,39 +25,43 @@ So how did we get here? The following is my journey to figure out how Factorio's
 The *Factorio Space Age* DLC introduced a new mechanic heavily reliant on random chance. 
 I'm of course talking about the *quality* mechanic [FFF #375](https://www.factorio.com/blog/post/fff-375).
 The initial announcement of this new mechanism saw a split in the community, 
-some eagerly awaiting this new challenge, while others were sceptical of the introduction of randomness across all crafting chains.
+some eagerly awaiting this new challenge, while others were skeptical of the introduction of randomness across all crafting chains.
 
 Factorio prides itself in their *deterministic* gameplay update, 
 allowing them, among other things, their replay feature and lockstep multiplayer simulation.
 This however, might lead one to ponder the following question:
-<p style="text-align:center;"><i>But *how* exactly does a *deterministic* process generate *random* values?</i></p>
+<p style="text-align:center;"><i>*How* exactly does a *deterministic* process generate *random* values?</i></p>
 
 In general computing, there are 2 different approaches which can be taken to tackle the task introducing randomness:
 1. Generate "_**true**_" random numbers - they are "true" in the sense that we
-   obtain them from an external source which we assume to produce a truly random
-   sequence of bits. Think of measuring when an isotope decays or random floating
-   voltage levels on a resistor.
+   obtain them from an external source which we assume to produce actually random
+   bit sequences. Think of measuring decay events of radioactive isotopes or 
+   noisy voltage levels on a floating resistor essentially measuring slight deviations in the electro magnetic field.
 2. Generate **pseudo-random** numbers - these are sequences of numbers which exhibit properties
-   similar to those found in sequences of true random numbers.
+   similar to those found in sequences of true random numbers, such as a known distribution (usually uniform) or consistent statistical moments.
    The key difference to *true* random numbers is however, that *pseudo* random numbers are produced through a deterministic process.
-   In particular, starting from the same internal state, applying the same algorithm the resulting sequence will always be the same.
+   In particular, we start with some state (usually *seeded* by some number) which will then advance by applying some algorithm, producing new "random" bits in the process.
+   By applying the same algorithm to the same initial state, we will always observe the same resulting sequence.
 
 It is important to note, that for game development the use of PRNGs (*pseudo random number generators*)
-offers some key advantages:
+offers some key benefits:
 - The output distribution behaves the same as true random numbers would.
 - They deterministically produce the same sequence from the same state.
-  This is advantageous in many cases: Consider consistency across different clients connected
-  to a shared server state, reproducible world generation, replays via input recording,...
-- Finally, their speed. Gathering random values from external sensors is quite slow 
-  (1000s of CPU cycles) while some pseudo random generators can be implemented
+  This is advantageous in many cases: Consider game consistency across different clients connected
+  to a shared server state, leading to reproducible world generation, replays via input recording
+  while providing random seeming events in the game.
+- Finally, their speed. Gathering random values from external sensors is quite slow
+  when compared to the processing speed of modern CPUs.
+  Gathering a single random value from an external source may take 1000s of CPU cycles,
+  whereas many pseudo random generators can be implemented
   using relatively few instructions thus being able to run magnitudes faster.
 
 As such, we *know* that they of course also use *pseudo random numbers* as opposed to true random numbers.
-Thus, we have the chance to do something quite funny (at least in my humble opinion):
+So we have the chance to do something quite funny (at least in my humble opinion):
 If one can figure out what the current state of the random generator is,
 future rolls yet to occur can be predicted,
 by simply performing the same computations *before* the actual game performs those random calls.
-This allows us to build an oracle for "random" events in the game, before they even happen!
+This allows us to build an oracle for "random" events in the game, predicting their outcome before they even happen!
 
 <!-- Let's now take a small timeline of events which occurred until this blog post transpired:
 - [The Mess Detector - Matthew, Earthcomputer, et. al.](https://www.youtube.com/watch?v=FPmQ0rnJjNc)
@@ -100,7 +104,7 @@ In it, we also find following answer by @Cube - a former developer at Wube. They
 >[!cite] Cube - Tue Sep 30, 2014 12:27 pm - [forums.factorio.com - topic 5995](https://forums.factorio.com/viewtopic.php?t=5995)
 >\[...\] We chose taus88 mainly because it is the fastest from boost's generators.
 > I was thinking of removing one of the three LFSRs (that should make it about
-> 40% (?) faster), but there is no point, since the ranom numbers are not a
+> 40% (?) faster), but there is no point, since the random numbers are not a
 > bottleneck for us.
 
 This already gives us a pretty large hint on where to look next: The boost random library.
@@ -131,7 +135,7 @@ class linear_feedback_shift_engine {
 [linear_feedback_shift_engine]: https://www.boost.org/doc/libs/1_88_0/boost/random/linear_feedback_shift.hpp
 
 This means that taus88 consists of 3 [linear_feedback_shift_engine]s whose' results are XOR'ed together.
-Note that the linear feedback shift engine is also commonly referred to as *LFSR*: *linear feedback shift register*.
+Note that this linear feedback shift engine is more commonly referred to as *LFSR*: *linear feedback shift register*.
 
 This information however was already quite old -- It already was 8 years old when beginning this project.
 Hence, I wanted to cross-check the information given on the forum against the most
@@ -161,7 +165,7 @@ uint RandomGenerator::getInt(RandomGenerator *this)
 }
 ```
 
-The first thing which stood out to me was that almost none of the 
+The first thing which stands out is that almost none of the 
 constants used in the original `taus88` definition remained.
 This can be attributed to compiler optimizations doing constant folding reducing the number of operations needed. 
 Though the fact that we store 3 seeds for our RNG state is the first promising indicator that it is actually the same generator.
@@ -185,10 +189,10 @@ Why and how? This is what we'll explore in the next chapter.
 To begin, we need to understand what the *linear feedback shift register* (LFSR) actually models.
 Initially we consider just a simple *register*:
 It describes a collection of bits, aggregated into a single value $x$.
-Each individual bit $x_i$ of it can be seen as a binary variable with $x_i \in \{0, 1\} = \mathbb{Z}_2$.
+Each individual bit $x_i$ of it can be seen as a binary variable with $x_i \in \{0, 1\} = \mathbb{F}_2$.
 By combining multiple bits through concatenation we build the entire register as $x = x_{n-1} \dots x_2 x_1 x_0$.
 While it is common to consider this register value $x$ to represent a number in the range $[0, 2^n-1] \subseteq \mathbb{Z}$,
-it is more useful in our case to instead consider the register to describe a *vector* of individual bits, i.e. $x \in \mathbb{Z}_2^n$.
+it is more useful in our case to instead consider the register to describe a *vector* of individual bits, i.e. $x \in \mathbb{F}_2^n$.
 Then let us consider 2 operations operating on individual bits:
 1. $x \oplus y$: The XOR operation. This is a binary operation which takes 2 bits and
    returns 1 if the bits differ and 0 if they are equal. Note that this is the same as addition modulo 2.
@@ -272,7 +276,7 @@ of 2 separate states.
 Note that whenever we observe $x_i \oplus x_i$ the $x_i$ cancels out, allowing us to remove it from the equation.
 
 Moreover, I already teased the use of the *linear* property of the feedback we used above.
-In particular $(\mathbb{Z}_2, \oplus, \cdot)$ forms a *field* (see [Wikipedia: Field](https://en.wikipedia.org/wiki/Field_(mathematics))).
+In particular $(\mathbb{F}_2, \oplus, \cdot)$ forms a *field* (see [Wikipedia: Field](https://en.wikipedia.org/wiki/Field_(mathematics))).
 
 > [!info] Field properties
 > The field properties are:
@@ -282,9 +286,10 @@ In particular $(\mathbb{Z}_2, \oplus, \cdot)$ forms a *field* (see [Wikipedia: F
 > - *Additive Inverse*: For any $a$ we have a $-a$ such that $a + (-a) = 0$. Here $a = -a$.
 > - *Multiplicative Inverse*: For any $a \neq 0$ we have $a^{-1}$ such that $a \cdot a^{-1} = 1$ is trivial as the only other element is 1.
 > - *Distributivity*: $a \cdot (b \oplus c) = (a \oplus b) \cdot (a \oplus c)$.
-> These properties can easily be checked for $\mathbb{Z}_2$ with truth tables.
+> 
+> Note that these properties can easily be checked for $\mathbb{F}_2$ with truth tables.
 
-This field is commonly known as the *Gallois field* $\text{GF}(2) = \mathbb{Z}/2\mathbb{Z} = \mathbb{Z}_2$
+This field is commonly known as the *Gallois field* $\text{GF}(2) = \mathbb{Z}/2\mathbb{Z} = \mathbb{F}_2$
 or the *modular arithmetic* mod 2.
 Using this *field* structure we can then also consider the *vector space* (see [Wikipedia: Vector Space](https://en.wikipedia.org/wiki/Vector_space#Definition_and_basic_properties)
 ) spanning all values
@@ -343,6 +348,7 @@ such as [Gaussian elimination](https://en.wikipedia.org/wiki/Gaussian_eliminatio
 > [!info]- Gaussian Elimination on $\text{GF}(2)$
 > Usually for Gaussian elimination we transform the matrix into an upper triangular matrix.
 > However for $GF(2)$ we can immediately solve for the inverse matrix instead by the following pseudo code:
+> 
 > ```python
 > def invert(M):
 >   # Extend with the identity matrix on the right
@@ -512,20 +518,20 @@ There are several ways to tackle this:
 2. Alternatively, we try to force the measurements to occur consecutively.
    This can be done by disabling all other sources in game which can interfere
    with the measured calls, doing our necessary calls in order and computing / manipulating from there.
-3. Building on this, the last considered variant ventures into *sub-tick mechanics*.
+3. The latter can be extended by venturing into the realm of *sub-tick mechanics*.
    Every 1/60th of a second, the game performs an update step, aka a *tick*.
-   Withing this tick all the simulation mechanics run in a fixed order.
+   Within this tick all the simulation mechanics run in a fixed order.
    One of the triggered mechanisms is of course the creation of the crafting results within
    all machines finishing their item crafting cycle.
    If we now can harness the order in which the machines queue the item creation events,
-   placing our *entropy generators* in a consecutive block in this queue,
-   we ensure that the RNG calls are gapless, ensuring proper state reconstruction can occur.
+   placing our *entropy generators* in a consecutive block within this queue,
+   we force that the RNG calls are gapless, ensuring proper state reconstruction can occur.
 
 For my implementations I chose to pursue both option 2 and 3.
-The former, as it does not rely on internal update orders, meaning it should *always*
-work (as long as the RNG does not change).
-Meanwhile in theory, the latter approach allows for faster state readout and more
-robustness against outside extraneous calls.
+The former, as it does not rely on internal update orders, is the fallback method which should *always*
+work (as long as the devs do not change the RNG away from `taus88`).
+Meanwhile in theory, the latter approach allows for way faster state readout and more
+robustness against extraneous outside calls.
 In practice however, it appears somewhat *flaky*, breaking at seemingly arbitrary times.
 
 <!-- 
@@ -652,7 +658,10 @@ $$o^{(t)}, o^{(t+1)}, \dots, o^{(t+87)} \in GF(2)$$
 
 A single unit measuring then can look as follows:
 
-![A single entropy measurement unit.](./factorio-rng/img/ingame_entropy_read_single.png)
+<figure>
+  <img alt="Screenshot of a single entropy measurement unit." src="./factorio-rng/img/ingame_entropy_read_single.png" />
+  <figcaption>A single entropy measurement unit.</figcaption>
+</figure>
 
 It has the following stages:
 1. The inserter will move exactly 1 repair pack into the recycler.
@@ -667,7 +676,10 @@ The above unit will therefore always provide us with 2 bits of information.
 To reconstruct the full state quickly, we copy this singular unit 44 times, yielding a total of 88 bits.
 This then comes out to:
 
-![All the entropy measurement units together.](./factorio-rng/img/ingame_entropy_read_all.png)
+<figure>
+  <img alt="All entropy units joined together." src="./factorio-rng/img/ingame_entropy_read_all.png">
+  <figcaption>All entropy units together.</figcaption>
+</figure>
 
 Of note here is the manner in which the individual units are queried.
 There are 2 approaches:
