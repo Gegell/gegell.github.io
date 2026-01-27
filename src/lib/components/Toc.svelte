@@ -2,20 +2,50 @@
 	import type { Toc } from '@stefanprobst/rehype-extract-toc';
 	import RiMenuFill from 'svelte-remixicon/RiMenuFill.svelte';
 	import { fly, slide } from 'svelte/transition';
+	import { onMount } from 'svelte';
 
 	let { headings = [] }: { headings?: Toc } = $props();
 	let open = $state(true);
+	let activeId = $state<string | null>(null);
 
 	function toggleToc() {
 		open = !open;
 	}
+
+	function updateActiveSection() {
+		// Get all headings on the page
+		const headingElements = document.querySelectorAll('h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]');
+		let current = null;
+
+		// Find the heading closest to the top of the viewport
+		for (const heading of headingElements) {
+			// TODO: use IntersectionObserver for better performance?
+			const rect = heading.getBoundingClientRect();
+			if (rect.top <= 100) {
+				current = heading.id;
+			} else {
+				break;
+			}
+		}
+
+		activeId = current;
+	}
+
+	onMount(() => {
+		updateActiveSection();
+		window.addEventListener('scroll', updateActiveSection);
+
+		return () => {
+			window.removeEventListener('scroll', updateActiveSection);
+		};
+	});
 </script>
 
 {#snippet tocList(items: Toc)}
 	<ol>
 		{#each items as { id, value, children, depth }}
 			<li>
-				<a href={'#' + id}>{value}</a>
+				<a href={'#' + id} class={activeId === id ? 'active' : ''}>{value}</a>
 				{#if children && children.length > 0}
 					{@render tocList(children)}
 				{/if}
@@ -65,5 +95,20 @@
 	li::before {
 		counter-increment: section;
 		content: counters(section, '.') '. ';
+	}
+
+	a {
+		display: inline-block;
+		text-decoration: none;
+		transition: color 0.2s ease;
+	}
+
+	a:hover {
+		text-decoration: underline;
+	}
+
+	a.active {
+		font-weight: 600;
+		color: var(--link-color, currentColor);
 	}
 </style>
