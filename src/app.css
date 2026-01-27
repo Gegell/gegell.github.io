@@ -1,6 +1,7 @@
 @import '@fontsource-variable/dm-sans';
 @import '@fontsource-variable/jetbrains-mono';
 @import 'rehype-callouts/theme/obsidian';
+@import 'katex/dist/katex.min.css';
 
 html {
     /* font */
