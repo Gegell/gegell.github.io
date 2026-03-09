@@ -127,7 +127,8 @@ svg_content = svg_content.replace(line_color, f"var(--brand, {line_color})")
 svg_content = svg_content.replace(text_color, f"var(--text-1, {text_color})")
 svg_content = svg_content.replace(grid_color, f"var(--text-2, {grid_color})")
 svg_content = svg_content.replace(background_color, f"var(--background, {background_color})")
-# TODO replace font-family
+# replace font-family
+# svg_content = svg_content.replace("DejaVu Sans", "var(--font-sans, DejaVu Sans)")
 with open(svg_path, "w", encoding="utf-8") as f:
     f.write(svg_content)
 

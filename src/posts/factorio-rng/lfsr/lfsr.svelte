@@ -6,24 +6,44 @@
 	interface Props {
 		initialState?: number;
 		tapMask?: number;
+		bits?: number;
+		reverse?: boolean;
+		value?: number;
+		onStateChange?: (newValue: number) => void;
 	}
 
-	let { initialState = 1, tapMask = 0b110000 }: Props = $props();
+	let { initialState = 1, tapMask = 0b110000, bits, reverse = false, value, onStateChange }: Props = $props();
 
 	function highestBit(n: number) {
 		return Math.floor(Math.log2(n));
 	}
 
-	let bitCount = $derived(highestBit(tapMask) + 1);
-	let lfsr = $state(initialState);
+	let bitCount = $derived(Number(bits) || highestBit(tapMask) + 1);
+	let lfsr = $state(value ?? initialState);
+
+	$effect(() => {
+		if (value !== undefined) {
+			lfsr = value;
+		}
+	});
 
 	onMount(reset);
 
 	function shiftLFSR() {
-		const feedback = lfsr & 1; // Feedback is the last bit
-		lfsr >>>= 1; // Right shift
-		if (feedback) {
-			lfsr ^= tapMask; // XOR feedback with tap bits
+		if (!reverse) {
+			const feedback = lfsr & 1; // Feedback is the last bit
+			lfsr >>>= 1; // Right shift
+			if (feedback) {
+				lfsr ^= tapMask; // XOR feedback with tap bits
+			}
+		} else {
+			const feedback = (lfsr >> (bitCount - 1)) & 1; // Feedback is the first bit
+			if (feedback) {
+				lfsr ^= tapMask; // XOR feedback with tap bits
+			}
+			lfsr <<= 1; // Left shift
+			lfsr &= (1 << bitCount) - 1; // Mask to bitCount bits
+			lfsr |= feedback; // Insert feedback at the end
 		}
 	}
 
@@ -33,31 +53,46 @@
 
 	function step() {
 		shiftLFSR();
-		historyEl.push(lfsr & 1);
+		if (!reverse) {
+			historyEl?.push();
+		}
+		onStateChange?.(lfsr);
 	}
 
 	function reset() {
 		lfsr = initialState;
-		historyEl.reset();
-		historyEl.push(lfsr & 1);
+		if (!reverse) {
+			historyEl?.reset();
+			historyEl?.push();
+		}
 	}
 
 	function toggleBit(i: number) {
 		lfsr ^= 1 << (bitCount - i - 1);
+		onStateChange?.(lfsr);
 	}
 
 	function col(i: number) {
 		return i ? 'var(--color-lit)' : 'var(--color-dim)';
 	}
 
+	const fullViewBoxHeight = 84;
+	const compactViewBoxHeight = 44;
+	const fullContainerHeightEm = 5;
+
 	let lfsrBits = $derived([...Array(bitCount).keys()].map((i) => (lfsr >> (bitCount - i - 1)) & 1));
+	let currentBit = $derived(lfsr & 1);
+	let viewBoxHeight = $derived(tapMask != 0 ? fullViewBoxHeight : compactViewBoxHeight);
+	let containerHeight = $derived(
+		`${(fullContainerHeightEm * viewBoxHeight) / fullViewBoxHeight}em`
+	);
 	let bitEls: SVGGraphicsElement[] = $state([]);
 	let xorEls: SVGGraphicsElement[] = $state([]);
-	let historyEl: History;
+	let historyEl: History | undefined = $state();
 </script>
 
-<div class="container">
-	<svg viewBox="-2 -2 {(bitCount - 0.5) * 80 + 4} 84">
+<div class="container" style:height={containerHeight}>
+	<svg viewBox="-2 -2 {(bitCount - 0.5) * 80 + 4} {viewBoxHeight}">
 		<defs>
 			<marker id="circle" markerWidth="8" markerHeight="8" refX="5" refY="5">
 				<circle cx="5" cy="5" r="2" fill="context-stroke" />
@@ -69,22 +104,40 @@
 		{#each bitEls as el, i}
 			{#if i < bitEls.length - 1}
 				{#if isTap(i + 1)}
-					<Arrow from={bitEls[i]} to={xorEls[i]} color={col(lfsrBits[i])} />
-					<Arrow from={xorEls[i]} to={bitEls[i + 1]} color={col(lfsrBits[i] ^ (lfsr & 1))} />
+					<Arrow
+						from={reverse ? xorEls[i] : bitEls[i]}
+						to={reverse ? bitEls[i] : xorEls[i]}
+						color={col(lfsrBits[reverse ? i + 1 : i] ^ (reverse ? (lfsr >>> (bitCount - 1)) : 0))}
+					/>
+					<Arrow
+						from={reverse ? bitEls[i + 1] : xorEls[i]}
+						to={reverse ? xorEls[i] : bitEls[i + 1]}
+						color={col(lfsrBits[reverse ? i + 1 : i] ^ (reverse ? 0 : (lfsr & 1)))}
+					/>
 				{:else}
-					<Arrow from={bitEls[i]} to={bitEls[i + 1]} color={col(lfsrBits[i])} />
+					<Arrow
+						from={reverse ? bitEls[i + 1] : bitEls[i]}
+						to={reverse ? bitEls[i] : bitEls[i + 1]}
+						color={col(lfsrBits[reverse ? i + 1 : i])}
+					/>
 				{/if}
 			{/if}
 		{/each}
 		<g
-			stroke={col(lfsrBits[lfsrBits.length - 1])}
+			stroke={col(reverse ? lfsrBits[0] : lfsrBits[lfsrBits.length - 1])}
 			fill="none"
 			stroke-width="1.75"
 			marker-end="url(#arrow)"
 		>
-			<path
-				d="M {anchor(90, bitEls[bitEls.length - 1])} h 20 V 60 H {anchor(180, bitEls[0]).join('V')}"
-			/>
+			{#if tapMask != 0}
+				{@const b = anchor(180, bitEls[0])}
+				{@const t = anchor(90, bitEls[bitEls.length - 1])}
+				{#if reverse}
+					<path d="M {b} V 60 H {t[0]} h 20 V {t[1]} h -20" />
+				{:else}
+					<path d="M {t} h 20 V 60 H {b.join('V')}" />
+				{/if}
+			{/if}
 			<path d="M {anchor(90, bitEls[bitEls.length - 1])} h 60" />
 			{#each xorEls as el, i}
 				{#if isTap(i + 1)}
@@ -103,7 +156,9 @@
 		{/each}
 
 		<!-- History of output bits -->
-		<History bind:this={historyEl} x={bitCount * 80} y={15} />
+		{#if !reverse}
+			<History bind:this={historyEl} x={bitCount * 80} y={15} current={currentBit} />
+		{/if}
 	</svg>
 </div>
 <Controls tick={step} {reset} />
@@ -111,7 +166,6 @@
 <style>
 	.container {
 		position: relative;
-		height: 5em;
 		--color-lit: var(--brand);
 		--color-dim: var(--text-1);
 	}

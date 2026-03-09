@@ -2,16 +2,20 @@
 	interface Props {
 		x: number;
 		y: number;
+		current: number;
 		limit?: number;
 	}
 
-	let { x, y, limit = 10 }: Props = $props();
+	let { x, y, current, limit = 10 }: Props = $props();
 	let history: number[] = $state([]);
 	let mutations: number = $state(0);
+	let displayHistory = $derived(
+		history.length ? [...history.slice(0, history.length - 1), current] : [current]
+	);
 
-	export function push(bit: number) {
+	export function push() {
 		mutations++;
-		history.push(bit);
+		history.push(current);
 		if (history.length > limit) {
 			history.shift();
 		}
@@ -24,7 +28,7 @@
 </script>
 
 <text {x} {y}>
-	{#each history.toReversed() as bit}
+	{#each displayHistory.toReversed() as bit}
 		<tspan class:active={!!bit}>
 			{bit}
 		</tspan>

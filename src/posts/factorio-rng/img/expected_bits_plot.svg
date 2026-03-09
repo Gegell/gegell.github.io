@@ -57,7 +57,7 @@ L 0 3.5
       </g>
      </g>
      <g id="text_1">
-      <text style="fill: var(--text-1, #111112); font: 12px 'DejaVu Sans', sans-serif; text-anchor: middle" x="86.291679" y="397.518125" transform="rotate(-0 86.291679 397.518125)">0</text>
+      <text style="fill: var(--text-1, #111112); font: 12px var(--font-system-ui, 'DejaVu Sans, inherit'), sans-serif; text-anchor: middle" x="86.291679" y="397.518125" transform="rotate(-0 86.291679 397.518125)">0</text>
      </g>
     </g>
     <g id="xtick_2">
@@ -75,7 +75,7 @@ L 104.830637 38.76
       <!-- $\frac{1}{32}$ -->
       <g style="fill: var(--text-1, #111112)" transform="translate(98.710637 399.8)">
        <text>
-        <tspan style="font: 8.4px 'DejaVu Sans'" x="0 3 5.344336" y="4.109375 -5.875 4.109375">312</tspan>
+        <tspan style="font: 8.4px var(--font-system-ui, 'DejaVu Sans, inherit')" x="0 3 5.344336" y="4.109375 -5.875 4.109375">312</tspan>
        </text>
        <rect x="0" y="-3.875" width="10.688672" height="0.75"/>
       </g>
@@ -96,7 +96,7 @@ L 123.369595 38.76
       <!-- $\frac{1}{16}$ -->
       <g style="fill: var(--text-1, #111112)" transform="translate(117.249595 399.8)">
        <text>
-        <tspan style="font: 8.4px 'DejaVu Sans'" x="0 3 5.344336" y="4.109375 -5.875 4.109375">116</tspan>
+        <tspan style="font: 8.4px var(--font-system-ui, 'DejaVu Sans, inherit')" x="0 3 5.344336" y="4.109375 -5.875 4.109375">116</tspan>
        </text>
        <rect x="0" y="-3.875" width="10.688672" height="0.75"/>
       </g>
@@ -117,7 +117,7 @@ L 160.44751 38.76
       <!-- $\frac{1}{8}$ -->
       <g style="fill: var(--text-1, #111112)" transform="translate(156.96751 399.8)">
        <text>
-        <tspan style="font: 8.4px 'DejaVu Sans'" x="0 0" y="-5.875 4.109375">18</tspan>
+        <tspan style="font: 8.4px var(--font-system-ui, 'DejaVu Sans, inherit')" x="0 0" y="-5.875 4.109375">18</tspan>
        </text>
        <rect x="0" y="-3.875" width="5.344336" height="0.75"/>
       </g>
@@ -138,7 +138,7 @@ L 234.60334 38.76
       <!-- $\frac{1}{4}$ -->
       <g style="fill: var(--text-1, #111112)" transform="translate(231.12334 399.8)">
        <text>
-        <tspan style="font: 8.4px 'DejaVu Sans'" x="0 0" y="-5.875 4.0">14</tspan>
+        <tspan style="font: 8.4px var(--font-system-ui, 'DejaVu Sans, inherit')" x="0 0" y="-5.875 4.0">14</tspan>
        </text>
        <rect x="0" y="-3.875" width="5.344336" height="0.75"/>
       </g>
@@ -159,7 +159,7 @@ L 382.915 38.76
       <!-- $\frac{1}{2}$ -->
       <g style="fill: var(--text-1, #111112)" transform="translate(379.435 399.8)">
        <text>
-        <tspan style="font: 8.4px 'DejaVu Sans'" x="0 0" y="-5.875 4.109375">12</tspan>
+        <tspan style="font: 8.4px var(--font-system-ui, 'DejaVu Sans, inherit')" x="0 0" y="-5.875 4.109375">12</tspan>
        </text>
        <rect x="0" y="-3.875" width="5.344336" height="0.75"/>
       </g>
@@ -180,7 +180,7 @@ L 660.999363 38.76
       <!-- $\frac{31}{32}$ -->
       <g style="fill: var(--text-1, #111112)" transform="translate(654.879363 400.04)">
        <text>
-        <tspan style="font: 8.4px 'DejaVu Sans'" x="0 0 5.344336 5.344336" y="-5.765625 4.339062500000001 -5.765625 4.339062500000001">3312</tspan>
+        <tspan style="font: 8.4px var(--font-system-ui, 'DejaVu Sans, inherit')" x="0 0 5.344336 5.344336" y="-5.765625 4.339062500000001 -5.765625 4.339062500000001">3312</tspan>
        </text>
        <rect x="0" y="-3.645312" width="10.688672" height="0.75"/>
       </g>
@@ -201,7 +201,7 @@ L 642.460405 38.76
       <!-- $\frac{15}{16}$ -->
       <g style="fill: var(--text-1, #111112)" transform="translate(636.340405 399.92)">
        <text>
-        <tspan style="font: 8.4px 'DejaVu Sans'" x="0 0 5.344336 5.344336" y="-5.875 4.229687500000001 -5.875 4.229687500000001">1156</tspan>
+        <tspan style="font: 8.4px var(--font-system-ui, 'DejaVu Sans, inherit')" x="0 0 5.344336 5.344336" y="-5.875 4.229687500000001 -5.875 4.229687500000001">1156</tspan>
        </text>
        <rect x="0" y="-3.754687" width="10.688672" height="0.75"/>
       </g>
@@ -222,7 +222,7 @@ L 605.38249 38.76
       <!-- $\frac{7}{8}$ -->
       <g style="fill: var(--text-1, #111112)" transform="translate(601.90249 399.8)">
        <text>
-        <tspan style="font: 8.4px 'DejaVu Sans'" x="0 0" y="-5.875 4.109375">78</tspan>
+        <tspan style="font: 8.4px var(--font-system-ui, 'DejaVu Sans, inherit')" x="0 0" y="-5.875 4.109375">78</tspan>
        </text>
        <rect x="0" y="-3.875" width="5.344336" height="0.75"/>
       </g>
@@ -243,7 +243,7 @@ L 531.22666 38.76
       <!-- $\frac{3}{4}$ -->
       <g style="fill: var(--text-1, #111112)" transform="translate(527.74666 400.04)">
        <text>
-        <tspan style="font: 8.4px 'DejaVu Sans'" x="0 0" y="-5.765625 4.229687500000001">34</tspan>
+        <tspan style="font: 8.4px var(--font-system-ui, 'DejaVu Sans, inherit')" x="0 0" y="-5.765625 4.229687500000001">34</tspan>
        </text>
        <rect x="0" y="-3.645312" width="5.344336" height="0.75"/>
       </g>
@@ -261,15 +261,15 @@ L 679.538321 38.76
       </g>
      </g>
      <g id="text_11">
-      <text style="fill: var(--text-1, #111112); font: 12px 'DejaVu Sans', sans-serif; text-anchor: middle" x="679.538321" y="397.518125" transform="rotate(-0 679.538321 397.518125)">1</text>
+      <text style="fill: var(--text-1, #111112); font: 12px var(--font-system-ui, 'DejaVu Sans, inherit'), sans-serif; text-anchor: middle" x="679.538321" y="397.518125" transform="rotate(-0 679.538321 397.518125)">1</text>
      </g>
     </g>
     <g id="text_12">
      <!-- Event likelihood $p$ -->
      <g style="fill: var(--text-1, #111112)" transform="translate(329.275 418.08)">
       <text>
-       <tspan style="font: 12px 'DejaVu Sans'" x="0 7.582031 14.683594 22.066406 29.671875 34.376953 38.191406 41.525391 44.859375 51.808594 59.191406 62.525391 65.859375 73.464844 80.806641 88.148438 95.765625" y="-0.875">Event likelihood </tspan>
-       <tspan style="font: oblique 12px 'DejaVu Sans'" x="99.580078" y="-0.875">p</tspan>
+       <tspan style="font: 12px var(--font-system-ui, 'DejaVu Sans, inherit')" x="0 7.582031 14.683594 22.066406 29.671875 34.376953 38.191406 41.525391 44.859375 51.808594 59.191406 62.525391 65.859375 73.464844 80.806641 88.148438 95.765625" y="-0.875">Event likelihood </tspan>
+       <tspan style="font: oblique 12px var(--font-system-ui, 'DejaVu Sans, inherit')" x="99.580078" y="-0.875">p</tspan>
       </text>
      </g>
     </g>
@@ -292,7 +292,7 @@ L -3.5 0
       </g>
      </g>
      <g id="text_13">
-      <text style="fill: var(--text-1, #111112); font: 12px 'DejaVu Sans', sans-serif; text-anchor: end" x="49.63" y="370.390435" transform="rotate(-0 49.63 370.390435)">0.0</text>
+      <text style="fill: var(--text-1, #111112); font: 12px var(--font-system-ui, 'DejaVu Sans, inherit'), sans-serif; text-anchor: end" x="49.63" y="370.390435" transform="rotate(-0 49.63 370.390435)">0.0</text>
      </g>
     </g>
     <g id="ytick_2">
@@ -307,7 +307,7 @@ L 709.2 303.532007
       </g>
      </g>
      <g id="text_14">
-      <text style="fill: var(--text-1, #111112); font: 12px 'DejaVu Sans', sans-serif; text-anchor: end" x="49.63" y="308.09107" transform="rotate(-0 49.63 308.09107)">0.2</text>
+      <text style="fill: var(--text-1, #111112); font: 12px var(--font-system-ui, 'DejaVu Sans, inherit'), sans-serif; text-anchor: end" x="49.63" y="308.09107" transform="rotate(-0 49.63 308.09107)">0.2</text>
      </g>
     </g>
     <g id="ytick_3">
@@ -322,7 +322,7 @@ L 709.2 241.232642
       </g>
      </g>
      <g id="text_15">
-      <text style="fill: var(--text-1, #111112); font: 12px 'DejaVu Sans', sans-serif; text-anchor: end" x="49.63" y="245.791704" transform="rotate(-0 49.63 245.791704)">0.4</text>
+      <text style="fill: var(--text-1, #111112); font: 12px var(--font-system-ui, 'DejaVu Sans, inherit'), sans-serif; text-anchor: end" x="49.63" y="245.791704" transform="rotate(-0 49.63 245.791704)">0.4</text>
      </g>
     </g>
     <g id="ytick_4">
@@ -337,7 +337,7 @@ L 709.2 178.933276
       </g>
      </g>
      <g id="text_16">
-      <text style="fill: var(--text-1, #111112); font: 12px 'DejaVu Sans', sans-serif; text-anchor: end" x="49.63" y="183.492339" transform="rotate(-0 49.63 183.492339)">0.6</text>
+      <text style="fill: var(--text-1, #111112); font: 12px var(--font-system-ui, 'DejaVu Sans, inherit'), sans-serif; text-anchor: end" x="49.63" y="183.492339" transform="rotate(-0 49.63 183.492339)">0.6</text>
      </g>
     </g>
     <g id="ytick_5">
@@ -352,7 +352,7 @@ L 709.2 116.633911
       </g>
      </g>
      <g id="text_17">
-      <text style="fill: var(--text-1, #111112); font: 12px 'DejaVu Sans', sans-serif; text-anchor: end" x="49.63" y="121.192973" transform="rotate(-0 49.63 121.192973)">0.8</text>
+      <text style="fill: var(--text-1, #111112); font: 12px var(--font-system-ui, 'DejaVu Sans, inherit'), sans-serif; text-anchor: end" x="49.63" y="121.192973" transform="rotate(-0 49.63 121.192973)">0.8</text>
      </g>
     </g>
     <g id="ytick_6">
@@ -367,15 +367,15 @@ L 709.2 54.334545
       </g>
      </g>
      <g id="text_18">
-      <text style="fill: var(--text-1, #111112); font: 12px 'DejaVu Sans', sans-serif; text-anchor: end" x="49.63" y="58.893608" transform="rotate(-0 49.63 58.893608)">1.0</text>
+      <text style="fill: var(--text-1, #111112); font: 12px var(--font-system-ui, 'DejaVu Sans, inherit'), sans-serif; text-anchor: end" x="49.63" y="58.893608" transform="rotate(-0 49.63 58.893608)">1.0</text>
      </g>
     </g>
     <g id="text_19">
      <!-- Expected #Bits $E(p)$ -->
      <g style="fill: var(--text-1, #111112)" transform="translate(24.02625 270.5) rotate(-90)">
       <text>
-       <tspan style="font: 12px 'DejaVu Sans'" x="0 7.582031 14.683594 22.300781 29.683594 36.28125 40.986328 48.369141 55.986328 59.800781 69.855469 78.087891 81.421875 86.126953 92.378906 103.775391 116.074219" y="-0.875">Expected #Bits ()</tspan>
-       <tspan style="font: oblique 12px 'DejaVu Sans'" x="96.193359 108.457031" y="-0.875">Ep</tspan>
+       <tspan style="font: 12px var(--font-system-ui, 'DejaVu Sans, inherit')" x="0 7.582031 14.683594 22.300781 29.683594 36.28125 40.986328 48.369141 55.986328 59.800781 69.855469 78.087891 81.421875 86.126953 92.378906 103.775391 116.074219" y="-0.875">Expected #Bits ()</tspan>
+       <tspan style="font: oblique 12px var(--font-system-ui, 'DejaVu Sans, inherit')" x="96.193359 108.457031" y="-0.875">Ep</tspan>
       </text>
      </g>
     </g>
@@ -521,8 +521,8 @@ z
     <!-- Expected Bits observed for Events of Probability $p$ -->
     <g style="fill: var(--text-1, #111112)" transform="translate(182.195 23.76)">
      <text>
-      <tspan style="font: 16px 'DejaVu Sans'" x="0 10.109375 19.578125 29.734375 39.578125 48.375 54.648438 64.492188 74.648438 79.734375 90.710938 95.15625 101.429688 109.765625 114.851562 124.640625 134.796875 143.132812 152.976562 159.554688 169.023438 178.867188 189.023438 194.109375 199.742188 209.53125 216.109375 221.195312 231.304688 240.773438 250.617188 260.757812 267.03125 275.367188 280.453125 290.242188 295.875 300.960938 310.609375 317.1875 326.976562 337.132812 346.9375 357.09375 361.539062 365.984375 370.429688 376.703125 386.171875" y="-0.84375">Expected Bits observed for Events of Probability </tspan>
-      <tspan style="font: oblique 16px 'DejaVu Sans'" x="391.257812" y="-0.84375">p</tspan>
+      <tspan style="font: 16px var(--font-system-ui, 'DejaVu Sans, inherit')" x="0 10.109375 19.578125 29.734375 39.578125 48.375 54.648438 64.492188 74.648438 79.734375 90.710938 95.15625 101.429688 109.765625 114.851562 124.640625 134.796875 143.132812 152.976562 159.554688 169.023438 178.867188 189.023438 194.109375 199.742188 209.53125 216.109375 221.195312 231.304688 240.773438 250.617188 260.757812 267.03125 275.367188 280.453125 290.242188 295.875 300.960938 310.609375 317.1875 326.976562 337.132812 346.9375 357.09375 361.539062 365.984375 370.429688 376.703125 386.171875" y="-0.84375">Expected Bits observed for Events of Probability </tspan>
+      <tspan style="font: oblique 16px var(--font-system-ui, 'DejaVu Sans, inherit')" x="391.257812" y="-0.84375">p</tspan>
      </text>
     </g>
    </g>

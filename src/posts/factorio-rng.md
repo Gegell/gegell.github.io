@@ -15,6 +15,8 @@ showToc: true
   import LFSR from './factorio-rng/lfsr'
   import QualityCalculator from './factorio-rng/quality-calculator'
   import rngplot from "./factorio-rng/img/expected_bits_plot.svg?raw"
+  
+  let sharedLfsrState = $state(0b110000);
 </script>
 
 
@@ -46,10 +48,10 @@ In general computing, there are 2 different approaches which can be taken to tac
 It is important to note, that for game development the use of PRNGs (*pseudo random number generators*)
 offers some key benefits:
 - The output distribution behaves the same as true random numbers would.
-- They deterministically produce the same sequence from the same state.
+- They deterministically produce the same sequence from the same initial state.
   This is advantageous in many cases: Consider game consistency across different clients connected
-  to a shared server state, leading to reproducible world generation, replays via input recording
-  while providing random seeming events in the game.
+  to a shared server state, leading to reproducible world generation or replays via input recording
+  while still providing seemingly random events in the game.
 - Finally, their speed. Gathering random values from external sensors is quite slow
   when compared to the processing speed of modern CPUs.
   Gathering a single random value from an external source may take 1000s of CPU cycles,
@@ -90,15 +92,15 @@ in the sequence. It is essentially the counting approach, just not counting in
 the order that we are used to.
 -->
 
-## The First Bit of Information
-While we can certainly say that they use a PRNG in Factorio, as of yet we do not
-know which one they actually chose.
+## Starting from Nothing
+We can certainly say that Factorio makes use of a PRNG.
+The question now however is which one they actually chose.
 
 To figure this out, the first step was doing some rudimentary internet research.
 As the Factorio community is quite large and filled with many technically inclined individuals,
 *surely* someone must have asked this question before.
 After digging around a bit I found a post on the Factorio forums asking basically
-the same thing I wanted to know, 11 years ago already.
+the same thing I wanted to know, 12 years ago already.
 In it, we also find following answer by @Cube - a former developer at Wube. They wrote:
 
 >[!cite] Cube - Tue Sep 30, 2014 12:27 pm - [forums.factorio.com - topic 5995](https://forums.factorio.com/viewtopic.php?t=5995)
@@ -123,6 +125,7 @@ class linear_feedback_shift_engine {
   // k = number of bits in the LFSR
   // q = feedback tap position
   // s = number of steps to do at once
+  // wordmask() = 0b11...111; mask of w low bits set
   result_type operator()() {
     const UIntType b = (((value << q) ^ value) & wordmask()) >> (k-s);
     const UIntType mask = (wordmask() << (w-k)) & wordmask();
@@ -134,16 +137,16 @@ class linear_feedback_shift_engine {
 [taus88]: https://www.boost.org/doc/libs/1_88_0/doc/html/doxygen/headers/taus88_8hpp_1a3822a73532a76cfeca0db9888d676c72.html
 [linear_feedback_shift_engine]: https://www.boost.org/doc/libs/1_88_0/boost/random/linear_feedback_shift.hpp
 
-This means that taus88 consists of 3 [linear_feedback_shift_engine]s whose' results are XOR'ed together.
+This means that taus88 consists of 3 "[linear_feedback_shift_engine]s" whose' results are XOR'ed together.
 Note that this linear feedback shift engine is more commonly referred to as *LFSR*: *linear feedback shift register*.
 
-This information however was already quite old -- It already was 8 years old when beginning this project.
+However, the forum post was already quite old -- already 8 years when this project was started.
 Hence, I wanted to cross-check the information given on the forum against the most
 accurate source available: The game binary.
 
 While the game itself is closed source, the developers graciously ship a `.pdb` file containing the debug symbols alongside the game binary.
 This means, that we can generate a well annotated decompilation of the binary, to inspect the code and figure out what is going on under the hood.
-To this end, I used both the open source tool [Ghidra](https://github.com/NationalSecurityAgency/ghidra) transitioning to [Binary Ninja](https://binary.ninja/) in later parts.
+To this end, I initially used the open source tool [Ghidra](https://github.com/NationalSecurityAgency/ghidra), moving to [Binary Ninja](https://binary.ninja/) in later parts.
 In the game's code I found the `RandomGenerator` class to implement the `getInt()` function as follows:
 
 ```cpp
@@ -165,39 +168,51 @@ uint RandomGenerator::getInt(RandomGenerator *this)
 }
 ```
 
-The first thing which stands out is that almost none of the 
+The first thing which stands out, is that almost none of the 
 constants used in the original `taus88` definition remained.
 This can be attributed to compiler optimizations doing constant folding reducing the number of operations needed. 
-Though the fact that we store 3 seeds for our RNG state is the first promising indicator that it is actually the same generator.
-Likewise, so is the fact that they are updated independently of one another with the final result being the XOR of all states.
+Though the fact that we store 3 seeds for our RNG state is a first promising indicator that it is actually the same generator.
+Likewise, so is the fact that the states are updated independently of one another with the final result being the XOR of all states.
 
-To be sure without a doubt though that they are equivalent I've implemented both
-variants in python such that they can be run using `sympy`. Updating both for a 
-single step indeed confirms that all bits of the corresponding registers update
+Though to rid me all doubts on whether they are equivalent I've implemented both
+variants in python, such that they can be run using [`sympy`] -- a python library which allows for symbolic manipulations.
+Advancing both variants a single step indeed confirms that all bits of the corresponding registers update
 in the exact same fashion. In this instance I've
 used `sympy` as this would've been a tedious number of equivalence checks to do by
-hand (3 * 32 = 96). The code responsible for proving this equivalence can be
+hand ($3 \cdot 32 = 96$). The code responsible for proving this equivalence can be
 found [here]().
 > [!warning] TODO
 > add link to my code which proves equivalence
 
-Sweet! So we now know that the RNG state is given as a combination of 3 underlying LFSRs.
-This was a *very* neat thing to see, as those are known to be broken quite easily.
-Why and how? This is what we'll explore in the next chapter.
+[`sympy`]: https://www.sympy.org/
+
+Ok, with all that established, we are certain that the RNG used in Factorio is indeed the `taus88` generator,
+which itself is a combination of 3 LFSRs.
+This is a very interesting result, as LFSRs are known to be quite weak PRNGs,
+online one even finds the statement that they are "*trivially breakable*"
+(which apparently in the language of security researchers means they are breakable).
+
+To understand what makes them "*weak*" and how we can exploit this weakness to predict future RNG calls,
+we first need to look at the underlying mathematics of LFSRs, which is subject of the next section.
 
 ## The Mathy Part
 To begin, we need to understand what the *linear feedback shift register* (LFSR) actually models.
-Initially we consider just a simple *register*:
-It describes a collection of bits, aggregated into a single value $x$.
-Each individual bit $x_i$ of it can be seen as a binary variable with $x_i \in \{0, 1\} = \mathbb{F}_2$.
-By combining multiple bits through concatenation we build the entire register as $x = x_{n-1} \dots x_2 x_1 x_0$.
-While it is common to consider this register value $x$ to represent a number in the range $[0, 2^n-1] \subseteq \mathbb{Z}$,
-it is more useful in our case to instead consider the register to describe a *vector* of individual bits, i.e. $x \in \mathbb{F}_2^n$.
-Then let us consider 2 operations operating on individual bits:
-1. $x \oplus y$: The XOR operation. This is a binary operation which takes 2 bits and
-   returns 1 if the bits differ and 0 if they are equal. Note that this is the same as addition modulo 2.
-2. $x \cdot y$: The AND operation. This binary operation takes 2 bits and
-   returns 1 if both bits are 1, otherwise it returns 0.
+Initially we consider just a simple *register*.
+It describes a collection of bits, aggregated into a single value $x$:
+$$ 
+x = x_{n-1} \dots x_2 x_1 x_0
+$$
+Each individual *bit* $x_i$ of it can be seen as a binary variable with $x_i \in \{0, 1\} = \mathbb{F}_2$.
+While it is common to consider this register value $x$ to represent a number in the range $[0, 2^n~-~1] \subseteq \mathbb{Z}$,
+it is more useful in our case to instead consider the register to actually describe a *vector* of individual bits, i.e. $x \in \mathbb{F}_2^n$.
+Additionally, we consider two operations which operate on each individual bit:
+1. $x \oplus y$: The XOR operation takes 2 bits and returns 1 if the bits differ and 0 if they are equal.
+   Note that this is equivalent to *addition* modulo 2.
+2. $x \cdot y$: The AND operation takes 2 bits and returns 1 if both bits are 1, otherwise it returns 0.
+   This now is equivalent to *multiplication* modulo 2.
+
+<!-- In table form:
+
 
 | $x$ | $y$ | $x \oplus y$ | $x \cdot y$ |
 | --- | --- | ------------ | ----------- |
@@ -207,17 +222,14 @@ Then let us consider 2 operations operating on individual bits:
 | 1   | 1   | 0            | 1           |
 
 > [!warning] TODO
-> Could do with a couple of examples what this exactly means. I.e. how does the arithmetic work, and why?
+> Could do with a couple of examples what this exactly means. I.e. how does the arithmetic work, and why? -->
 
-The register is now extended to a *shift register*.
-This extension is simple enough:
-We just move the bits in the register around by taking each higher bit and shifting it 1 position down,
-dropping the lowest bit.
+Now extend the register to a *shift register*.
+To shift, move all bits in the register by taking each higher bit and shifting it 1 position down,
+dropping the lowest bit as the output.
 Let's see how ticking this register now advances its state:
 
-> [!warning] TODO
-> insert the svelte LFSR component here with no feedback connections, but the shift downward arrows, step, animate & reset buttons
-
+<LFSR tapMask=0 bits=6 initialState=0b100001/>
 
 Well... This is boring! We converge pretty quickly to the same value of 0 regardless of the initial state.
 This does not seem random at all. 
@@ -257,6 +269,17 @@ In particular, given the state $x^{(t)}$ at time $t$ we now know how to:
 1. Generate the next state $x^{(t+1)}$.
 2. Generate corresponding output bits, either one at a time, or as a full integer value.
 
+> [!note]- Regarding the Cycle length of LFSRs
+> 
+> The cycle length of an LFSR is the number of steps it takes until the state repeats.
+> For an LFSR with $n$ bits, the maximum cycle length is $2^n - 1$ (every state except the all-zero state).
+> LFSRs mechanics are actually also modeled by polynomials over $\mathbb{F}_2$.
+> A single step then corresponds to multiplying the current state $S(X) = \sum_{i=0}^{n-1} x_i X^i$
+> with $X$ (this shifts the bits up one index).
+> Finally, by doing this modulo the feedback polynomial $P(X)$ of degree $n$ which needs to be **irreducible** we can ensure that the cycle length is maximal, i.e. $2^n - 1$.
+> $P(X)$ then corresponds to the spaces where the feedback is inserted, i.e. the bits which are XOR'ed with the feedback bit.
+> In other words, not all feedback configurations are equally good, and the choice of feedback taps is crucial to ensure a long cycle length.
+
 ### Inverting an LFSR
 Previously all examples started at a fixed state for $x$.
 I.e. these were states where all bits are set either to 0 or 1.
@@ -277,24 +300,25 @@ Note that whenever we observe $x_i \oplus x_i$ the $x_i$ cancels out, allowing u
 
 Moreover, I already teased the use of the *linear* property of the feedback we used above.
 In particular $(\mathbb{F}_2, \oplus, \cdot)$ forms a *field* (see [Wikipedia: Field](https://en.wikipedia.org/wiki/Field_(mathematics))).
-
-> [!info] Field properties
-> The field properties are:
-> - *Associativity* (both $\oplus$ and $\cdot$): $a \oplus (b \oplus c) = (a \oplus b) \oplus c$ and $a \cdot (b \cdot c) = (a \cdot b) \cdot c$.
-> - *Commutativity* (both $\oplus$ and $\cdot$): $a \oplus b = b \oplus a$ and $a \cdot b = b \cdot a$.
-> - *Identity*: For $\oplus$ this is 0: $0 \oplus a = a$ and for $\cdot$ this is 1: $1 \cdot a = a$.
-> - *Additive Inverse*: For any $a$ we have a $-a$ such that $a + (-a) = 0$. Here $a = -a$.
-> - *Multiplicative Inverse*: For any $a \neq 0$ we have $a^{-1}$ such that $a \cdot a^{-1} = 1$ is trivial as the only other element is 1.
-> - *Distributivity*: $a \cdot (b \oplus c) = (a \oplus b) \cdot (a \oplus c)$.
-> 
-> Note that these properties can easily be checked for $\mathbb{F}_2$ with truth tables.
-
 This field is commonly known as the *Gallois field* $\text{GF}(2) = \mathbb{Z}/2\mathbb{Z} = \mathbb{F}_2$
 or the *modular arithmetic* mod 2.
 Using this *field* structure we can then also consider the *vector space* (see [Wikipedia: Vector Space](https://en.wikipedia.org/wiki/Vector_space#Definition_and_basic_properties)
 ) spanning all values
 $\text{GF}(2)^n$ with the scalars from $\text{GF}(2)$ and the operators from the field
 applied pointwise to each coordinate.
+
+> [!info]- Field properties of $(\mathbb{F}_2, \oplus, \cdot)$
+> The properties which need to be satisfied to declare $(\mathbb{F}_2, \oplus, \cdot)$ a field are as follows:
+> - *Associativity* (both $\oplus$ and $\cdot$): $a \oplus (b \oplus c) = (a \oplus b) \oplus c$ and $a \cdot (b \cdot c) = (a \cdot b) \cdot c$.
+> - *Commutativity* (both $\oplus$ and $\cdot$): $a \oplus b = b \oplus a$ and $a \cdot b = b \cdot a$.
+> - *Identity*: For $\oplus$ this is $0$: $0 \oplus a = a$ and for $\cdot$ this is $1$: $1 \cdot a = a$.
+> - *Additive Inverse*: For any $a$ we have a $-a$ such that $a + (-a) = 0$. Note that here we have $a = -a$.
+> - *Multiplicative Inverse*: For any $a \neq 0$ we have $a^{-1}$ such that $a \cdot a^{-1} = 1$ is trivial as the only other element is 1.
+> - *Distributivity*: $a \cdot (b \oplus c) = (a \oplus b) \cdot (a \oplus c)$.
+> 
+> Note that these properties can easily be checked for $\mathbb{F}_2$ with truth tables,
+> at most 8 rows are necessary.
+
 <!-- 
 > [!note]- Gallois Field $\text{GF}(p)$
 > If $p \in \mathbb{N}$ is a prime number, then $\text{GF}(p) = \mathbb{F}_p = \mathbb{Z}/p\mathbb{Z}$ is a field.
@@ -329,17 +353,32 @@ s^{(t+1)} = T s^{(t)}
 $$
 where $T \in \text{GF}(2)^{n \times n}$. 
 Moreover, careful observation of the original construction of our LFSRs highlights that this transition matrix *needs* to be invertible.
-> [!info]- Invertability of $T$
-> Remember that $T$ originates from the construction of the LFSR.
-> Construct a new LFSR by differentiating the following two cases:
-> 1. The bit is just shifted from above, no XOR between.
->    This step is reversible by just flipping the direction of the shift.
-> 2. The bit is a combination of both the upper bit and feedback bit. 
->    Since the feedback bit is inserted into the highest bit without modification,
->    this step can be reversed by XORing the bit state with the most significant bit
->    (cancelling out the corresponding added state) and shifting it as though no modification happened.
->
-> In effect this amounts to flipping the arrows in the above diagrams by 180.
+Consider the same toy LFSR as shown above:
+<LFSR tapMask=0b110000 value={sharedLfsrState} onStateChange={(newVal) => sharedLfsrState = newVal} />
+
+By modifying the way in which the data flows, a new variant can be constructed, 
+which allows us to run the same LFSR but in reverse.
+These changes originate from the following:
+1. In the "*forwards mode*" each step sets the top most bit to the previous states bottom most bit value.
+   This means, the feedback arrow can now originate from the topmost bit instead.
+2. If a bit is just shifted from above with no XOR between, then
+   this step is reversible by just flipping the direction of the shift.
+3. However, if it is a combination of both the upper bit and feedback bit, 
+   then we reverse the step by computing $x_{i+1} = x_{n} \oplus {x_i}$.
+   Visually this is consistent with the first step, where we reversed the feedback bit origin,
+   and we keep all XORs as is, just fed with the new feedback source.
+   This will cancel out the previously added state, and reverse the shift as though no modification happened.
+
+In simpler terms, this amounts to us just flipping almost all arrows from the previous
+LFSR to obtain the following "*reverse mode*" LFSR:
+<LFSR tapMask=0b110000 value={sharedLfsrState} onStateChange={(newVal) => sharedLfsrState = newVal} reverse/>
+
+In mathematical terms what we have just shown is that if $T$ exists which corresponds to a single forwards step,
+then we can always construct another matrix $T^-1$ which perfectly reverses the previous step.
+I.e. we have found an inverse:
+$$ 
+T^{-1} T = I
+$$
 
 As such, for any given $T$ originating from an LFSR we know that $T^{-1}$ exists.
 This can then either be generated by the construction above, or alternative methods
@@ -581,10 +620,10 @@ As these chances being both quite low / high we gain important knowledge wheneve
 The resulting item gets generated if the respective inequality holds,
 where $r_i \in [0, 2^{32}-1]$ is the computed RNG roll:
 $$
-\begin{alignat}{}
+\begin{alignat*}{}
 r_1 \leq \left\lfloor 0.993 \cdot 2^{32} \right\rfloor &=\;& 4\,264\,902\,524_{10} &&= 11111110\ 00110101\ 00111111\ 01111100_2\\
 r_2 \leq \left\lfloor 0.007 \cdot 2^{32} \right\rfloor &=\;&     30\,064\,771_{10} &&= 00000001\ 11001010\ 11000000\ 10000011_2
-\end{alignat}
+\end{alignat*}
 $$
 
 In particular: If U238 **was not** generated, we know that the first 7 bits are 1 and if U235 **was** generated then the first 7 bits were 0.
