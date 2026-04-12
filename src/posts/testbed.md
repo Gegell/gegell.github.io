@@ -29,6 +29,7 @@ Testing a wide div with overflow -- representing a long expression using katex.
     import rngplot from "./factorio-rng/img/expected_bits_plot.svg?raw"
     import Matrix from "./factorio-rng/matrix"
     import Solver from "./factorio-rng/solver/solver.svelte"
+    import Foldout from "$lib/components/Foldout.svelte"
 </script>
 {@html rngplot}
 
@@ -36,3 +37,35 @@ Testing a wide div with overflow -- representing a long expression using katex.
 <Solver />
 
 <img src="./factorio-rng/img/matrix_fwd_1.png" style="image-rendering: crisp-edges" width="288px">
+
+<!-- Hmmm I thought the foldout works with katex... it did for a short period of time :shrug: -->
+<!-- <Foldout>
+$$
+\begin{aligned}
+a_{31}' &= \big(( a_{19} \oplus 0) \cdot 0\big) \oplus 0 \oplus a_{19}\\
+a_{30}' &= \big(( a_{18} \oplus 0) \cdot 0\big) \oplus 0 \oplus a_{18}\\
+a_{31}' &= \big(( a_{19} \oplus 0) \cdot 0\big) \oplus 0 \oplus a_{19}\\
+a_{30}' &= \big(( a_{18} \oplus 0) \cdot 0\big) \oplus 0 \oplus a_{18}\\
+a_{31}' &= \big(( a_{19} \oplus 0) \cdot 0\big) \oplus 0 \oplus a_{19}\\
+a_{30}' &= \big(( a_{18} \oplus 0) \cdot 0\big) \oplus 0 \oplus a_{18}\\
+a_{31}' &= \big(( a_{19} \oplus 0) \cdot 0\big) \oplus 0 \oplus a_{19}\\
+a_{30}' &= \big(( a_{18} \oplus 0) \cdot 0\big) \oplus 0 \oplus a_{18}\\
+a_{31}' &= \big(( a_{19} \oplus 0) \cdot 0\big) \oplus 0 \oplus a_{19}\\
+a_{30}' &= \big(( a_{18} \oplus 0) \cdot 0\big) \oplus 0 \oplus a_{18}\\
+a_{31}' &= \big(( a_{19} \oplus 0) \cdot 0\big) \oplus 0 \oplus a_{19}\\
+a_{30}' &= \big(( a_{18} \oplus 0) \cdot 0\big) \oplus 0 \oplus a_{18}\\
+a_{31}' &= \big(( a_{19} \oplus 0) \cdot 0\big) \oplus 0 \oplus a_{19}\\
+a_{30}' &= \big(( a_{18} \oplus 0) \cdot 0\big) \oplus 0 \oplus a_{18}\\
+a_{31}' &= \big(( a_{19} \oplus 0) \cdot 0\big) \oplus 0 \oplus a_{19}\\
+a_{30}' &= \big(( a_{18} \oplus 0) \cdot 0\big) \oplus 0 \oplus a_{18}\\
+a_{31}' &= \big(( a_{19} \oplus 0) \cdot 0\big) \oplus 0 \oplus a_{19}\\
+a_{30}' &= \big(( a_{18} \oplus 0) \cdot 0\big) \oplus 0 \oplus a_{18}\\
+a_{31}' &= \big(( a_{19} \oplus 0) \cdot 0\big) \oplus 0 \oplus a_{19}\\
+a_{30}' &= \big(( a_{18} \oplus 0) \cdot 0\big) \oplus 0 \oplus a_{18}\\
+a_{31}' &= \big(( a_{19} \oplus 0) \cdot 0\big) \oplus 0 \oplus a_{19}\\
+a_{30}' &= \big(( a_{18} \oplus 0) \cdot 0\big) \oplus 0 \oplus a_{18}\\
+a_{31}' &= \big(( a_{19} \oplus 0) \cdot 0\big) \oplus 0 \oplus a_{19}\\
+a_{30}' &= \big(( a_{18} \oplus 0) \cdot 0\big) \oplus 0 \oplus a_{18}\\
+\end{aligned}
+$$
+</Foldout> -->
