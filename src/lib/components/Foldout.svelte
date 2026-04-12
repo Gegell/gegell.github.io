@@ -4,6 +4,17 @@
 	let { children } = $props();
 	let open = $state(false);
 	let contentEl: HTMLDivElement | null = $state(null);
+
+	function toggleFoldout() {
+		if (open && contentEl) {
+      window.scrollBy({
+        top: -contentEl.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+
+		open = !open;
+	}
 </script>
 
 <div
@@ -28,9 +39,7 @@
 <!-- Custom arrow downwards -->
 <button
 	type="button"
-	onclick={() => {
-		open = !open;
-	}}
+	onclick={toggleFoldout}
 	aria-label="toggle foldout"
 >
 	<svg viewBox="-2 2 24 24" xmlns="http://www.w3.org/2000/svg" height="2em" class:open>
@@ -73,7 +82,7 @@
 	}
 
 	svg {
-		transition: transform 0.2s;
+		transition: transform 400ms ease-out;
 	}
 
 	svg.open {
