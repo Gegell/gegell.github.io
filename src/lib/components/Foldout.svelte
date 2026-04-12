@@ -44,7 +44,7 @@
 >
 	<svg viewBox="-2 2 24 24" xmlns="http://www.w3.org/2000/svg" height="2em" class:open>
 		<path
-			stroke="white"
+			stroke="var(--text-1)"
 			stroke-width="1pt"
 			stroke-linejoin="round"
 			stroke-linecap="round"
@@ -65,7 +65,7 @@
 	}
 
 	.content-wrap {
-		overflow: hidden;
+		overflow-y: hidden;
 		position: relative;
     /* Bounce out */
 		/* transition: max-height 400ms cubic-bezier(0.18, 0.89, 0.32, 1.28); */
@@ -73,13 +73,27 @@
     transition: max-height 400ms ease-out;
 	}
 
+  @keyframes bounce-button {
+    0% { transform: translateY(0); }
+    30% { transform: translateY(-5px) scaleX(0.7) scaleY(1.3); }
+    50% { transform: translateY(2px) scaleX(1.1) scaleY(1); }
+    70% { transform: translateY(-4px) scaleX(0.7) scaleY(1.2); }
+    100% { transform: translateY(0); }
+  }
+
 	button {
 		margin-inline: auto;
+    box-shadow: none;
 		display: block;
 		padding: 0;
 		border: none;
 		background: none;
+    animation-fill-mode: forwards;
 	}
+
+  button:hover {
+    animation: bounce-button 800ms ease-in-out;
+  }
 
 	svg {
 		transition: transform 400ms ease-out;
