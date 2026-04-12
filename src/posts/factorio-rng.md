@@ -14,6 +14,8 @@ showToc: true
 <script>
   import LFSR from './factorio-rng/lfsr'
   import QualityCalculator from './factorio-rng/quality-calculator'
+  import EntropyTable from './factorio-rng/entropy-table'
+  import Foldout from '$lib/components/Foldout.svelte'
   import rngplot from "./factorio-rng/img/expected_bits_plot.svg?raw"
   
   let sharedLfsrState = $state(0b110000);
@@ -359,22 +361,22 @@ Consider the same toy LFSR as shown above:
 By modifying the way in which the data flows, a new variant can be constructed, 
 which allows us to run the same LFSR but in reverse.
 These changes originate from the following:
-1. In the "*forwards mode*" each step sets the top most bit to the previous states bottom most bit value.
-   This means, the feedback arrow can now originate from the topmost bit instead.
+1. In the "*forwards mode*" each step sets the top most bit $x_{n-1}$ to the previous states bottom most bit value $x_0$.
+   This means, the feedback arrow can now originate from the topmost bit $x_{n-1}$ instead.
 2. If a bit is just shifted from above with no XOR between, then
    this step is reversible by just flipping the direction of the shift.
 3. However, if it is a combination of both the upper bit and feedback bit, 
-   then we reverse the step by computing $x_{i+1} = x_{n} \oplus {x_i}$.
+   then we reverse the step by computing $x_{i+1} = x_{n-1} \oplus {x_i}$.
    Visually this is consistent with the first step, where we reversed the feedback bit origin,
-   and we keep all XORs as is, just fed with the new feedback source.
+   keeping all XORs at the same locations, feeding them with the new source value.
    This will cancel out the previously added state, and reverse the shift as though no modification happened.
 
 In simpler terms, this amounts to us just flipping almost all arrows from the previous
-LFSR to obtain the following "*reverse mode*" LFSR:
+LFSR diagram to obtain the following "*reverse mode*" LFSR:
 <LFSR tapMask=0b110000 value={sharedLfsrState} onStateChange={(newVal) => sharedLfsrState = newVal} reverse/>
 
 In mathematical terms what we have just shown is that if $T$ exists which corresponds to a single forwards step,
-then we can always construct another matrix $T^-1$ which perfectly reverses the previous step.
+then we can always construct another matrix $T^{-1}$ which perfectly reverses the previous step.
 I.e. we have found an inverse:
 $$ 
 T^{-1} T = I
@@ -665,18 +667,35 @@ The plot induces the following facts:
 In fact, what we just calculated is a discretized version of the
 [Shannon Entropy](https://en.wikipedia.org/wiki/Entropy_(information_theory)).
 As such, we have a measure applicable to each recipe in game allowing us to find the recipe yielding the most information per craft.
-> [!warning] TODO
-> insert the table here which shows all the recipe entropy values. 
+By extracting the relevant recipe data from the raw game dump [^data_dump] we can compute the entropy for each recipe.
+
+Doing so yields the following table of recipes and their corresponding expected bits of information per craft along side how long each craft takes:
+
+<figure>
+  <Foldout>
+    <EntropyTable />
+  </Foldout>
+  <figcaption>
+    Entropy values for recipes with random results.
+  </figcaption>
+</figure>
+
 
 As we can see there are *waaay* better recipes to utilize for extracting information from the game.
 One might think that [scrap recycling](https://wiki.factorio.com/Scrap) would yield a lot of information,
-but is with an entropy of 2.05 only slightly above recipes like recycling [repair packs](https://wiki.factorio.com/Repair_pack) which have entropy of 2.
-This is due to the fact that recycling repair packs (and similar recipes with ingredient count = 4n+2)
+but with an entropy of $2.05$ it is only slightly above recipes like recycling [repair packs](https://wiki.factorio.com/Repair_pack) which have entropy of $2$.
+This is due to the fact that recycling repair packs (and similar recipes with ingredient count $= 4n+2$)
 yield exactly one bit of information of the RNG output in either case,
-as it creates a perfect 50 / 50 split on whether the additional item will be created or not.
+as it creates a perfect $50 / 50$ split on whether the additional item will be created or not.
 There are obviously alternative recipes such as the [oil refinery](https://wiki.factorio.com/Oil_refinery)
-which has an entropy of 4.5.
+which has an entropy of $4.5$.
 These however are also quite a bit more expensive and slower than doing repair pack recycling.
+
+As such, I chose to implement the state readout using the repair pack recycling method, as they are cheap, fast to craft and unlocked early in game.
+
+[^data_dump]: Factorio actually provides one with command line arguments.
+  One of these is `--dump-data` which outputs a JSON file containing the processed prototypes as they are loaded in game.
+  This can then be parsed for further processing, such as extracting the various recipes.
 
 ## Actual Implementation
 To actually implement the reversal and manipulation of the RNG I've split the computation into the following steps:

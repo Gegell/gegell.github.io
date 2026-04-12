@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { qualityIcon } from '../tileset-image';
+	import { TilesetIcon, qualityTileset, qualityTilesetMap } from '../tileset-image';
 
 	type Quality = {
 		name: string;
@@ -74,7 +74,7 @@
 				onclick={() => (startQuality = i)}
 				aria-label={quality.name}
 			>
-				{@render qualityIcon(quality.name)}
+				<TilesetIcon name={quality.name} map={qualityTilesetMap} image={qualityTileset} size={20} />
 			</button>
 		{/each}
 	</div>
@@ -103,7 +103,7 @@
 		{#each qualities as quality, i}
 			{@const prob_thresh = prob_thresholds[i]}
 			<tr>
-				<td>{@render qualityIcon(quality.name)}</td>
+				<td><TilesetIcon name={quality.name} map={qualityTilesetMap} image={qualityTileset} size={20} /></td>
 				<td class="int-col"
 					>{prob_thresh === null ? '-' : fmtProb(probThresholdToProb(i))}</td
 				>
