@@ -1022,16 +1022,16 @@ the average production is close to the real production results.
 None the less, this project was quite a learning experience encompassing:
 - Learning about *Galois Fields* and their combination with vector spaces.
 - Reversal of the game binary, and figuring out the relevant control flows.
-  Even splurging on (Binary Ninja)[https://binary.ninja/] which was so much more
+  Even splurging on [Binary Ninja](https://binary.ninja/) which was so much more
   useful for reverse engineering than the open source alternative 
-  (Ghidra)[https://github.com/NationalSecurityAgency/ghidra].
+  [Ghidra](https://github.com/NationalSecurityAgency/ghidra).
 - Reimplementing the RNG, the matrix solver and parallel matrix multiplier all
   in game in an efficient manner.
 
-P.s. I've begun this project end of april 2024, and finally got over being lazy
+P.s. I've begun this project end of April 2024, and finally got over being lazy
 and published it more than a year later.
 In the mean time someone else also posted about this on the
-Factorio forums (Random number manipulation possibilities)[https://forums.factorio.com/viewtopic.php?p=660560].
+Factorio forums [Random number manipulation possibilities](https://forums.factorio.com/viewtopic.php?p=660560).
 As far as I can tell they stopped at a similar point as I did in one of the earlier
 stages in the project, that is predicting the state externally with a separate
 python script from some observations.
