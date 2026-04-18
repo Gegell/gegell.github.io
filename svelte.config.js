@@ -2,8 +2,9 @@ import adapter from '@sveltejs/adapter-static';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 import { mdsvex, escapeSvelte } from 'mdsvex';
-import remarkMath from 'remark-math'
-import rehypeKatexSvelte from 'rehype-katex-svelte'
+import remarkMath from 'remark-math';
+import remarkFootnotes from 'remark-footnotes';
+import rehypeKatexSvelte from 'rehype-katex-svelte';
 import rehypeCallouts from 'rehype-callouts';
 import { createHighlighter } from 'shiki'
 import rehypeSlug from 'rehype-slug';
@@ -22,7 +23,8 @@ const mdsvexOptions = {
 	extension: '.md',
 	remarkPlugins: [
 		remarkMath,
-		relativeImages
+		relativeImages,
+		remarkFootnotes
 	],
 	rehypePlugins: [
 		rehypeCallouts,

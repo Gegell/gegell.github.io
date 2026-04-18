@@ -20,6 +20,9 @@ importers:
       open-props:
         specifier: ^1.7.15
         version: 1.7.15
+      remark-footnotes:
+        specifier: ~2.0.0
+        version: 2.0.0
     devDependencies:
       '@stefanprobst/rehype-extract-toc':
         specifier: ^3.0.0
@@ -1240,6 +1243,9 @@ packages:
 
   rehype-slug@6.0.0:
     resolution: {integrity: sha512-lWyvf/jwu+oS5+hL5eClVd3hNdmwM1kAC0BUvEGD19pajQMIzcNUd/k9GsfQ+FfECvX+JE+e9/btsKH0EjJT6A==}
+
+  remark-footnotes@2.0.0:
+    resolution: {integrity: sha512-3Clt8ZMH75Ayjp9q4CorNeyjwIxHFcTkaektplKGl2A1jNGEUey8cKL0ZC5vJwfcD5GFGsNLImLG/NGzWIzoMQ==}
 
   remark-math@3.0.0:
     resolution: {integrity: sha512-1ptXVKQaxexoS1pywvbtoRofKenkulyWa7trXUh2LR5NCdzmqfUlM/aA8qyke7h63BGMFXVjPNjOZmD8oWkKDg==}
@@ -2653,6 +2659,8 @@ snapshots:
       hast-util-heading-rank: 3.0.0
       hast-util-to-string: 3.0.1
       unist-util-visit: 5.0.0
+
+  remark-footnotes@2.0.0: {}
 
   remark-math@3.0.0: {}
 
