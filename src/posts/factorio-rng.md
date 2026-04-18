@@ -33,32 +33,32 @@ I'm of course talking about the *quality* mechanic [FFF #375](https://www.factor
 The initial announcement of this new mechanism saw a split in the community, 
 some eagerly awaiting this new challenge, while others were skeptical of the introduction of randomness across all crafting chains.
 
-Factorio prides itself in their *deterministic* gameplay update, 
-allowing them, among other things, their replay feature and lockstep multiplayer simulation.
-This however, might lead one to ponder the following question:
+Factorio prides itself on its *deterministic* simulation,
+which enables features like replays and lockstep multiplayer.
+This, however, might lead one to ponder the following question:
 <p style="text-align:center;">Exactly <i>how</i> does a <i>deterministic</i> process generate <i>random</i> values?</p>
 
-In general computing, there are 2 different approaches which can be taken to tackle the task introducing randomness:
-1. Generate "_**true**_" random numbers - they are "true" in the sense that we
-   obtain them from an external source which we assume to produce actually random
-   bit sequences. Think of measuring decay events of radioactive isotopes or 
-   noisy voltage levels on a floating resistor essentially measuring slight deviations in the electro magnetic field.
-2. Generate **pseudo-random** numbers - these are sequences of numbers which exhibit properties
+In computing, generally there are two main approaches for introducing randomness:
+1. Generate "_**true**_" random numbers. They are "true" in the sense that we
+  obtain them from an external source that we assume produces genuinely random
+  bit sequences. Think of measuring decay events of radioactive isotopes or
+  noisy voltage levels on a floating resistor, essentially measuring slight deviations in the electromagnetic field.
+2. Generate **pseudo-random** numbers. These are sequences of numbers which exhibit properties
    similar to those found in sequences of true random numbers, such as a known distribution (usually uniform) with consistent statistical moments such as mean and variance.
-   The key difference to *true* random numbers is however, that *pseudo* random numbers are produced through a deterministic process.
-   In particular, we start with some state (usually *seeded* by some number) which will then advance by applying some algorithm, producing new "random" bits in the process.
+  The key difference from *true* random numbers, however, is that *pseudo* random numbers are produced through a deterministic process.
+  In particular, we start with some state (usually *seeded* by a value) and then advance it with an algorithm, producing new "random" bits in the process.
    By applying the same algorithm to the same initial state, we will always observe the same resulting sequence.
 
-It is important to note, that for game development the use of PRNGs (*pseudo random number generators*)
+It is important to note that for game development the use of PRNGs (*pseudo-random number generators*)
 offers some key benefits:
-- The output distribution behaves similar to those of true random numbers.
+- The output distribution behaves similarly to that of true random numbers.
 - They deterministically produce the same sequence from the same initial state.
-  This is advantageous in many cases: Consider game consistency across different clients connected
+  This is advantageous in many cases: consider game consistency across different clients connected
   to a shared server state, leading to reproducible world generation or replays via input recording
   while still providing seemingly random events in the game.
 - Finally, their speed. Gathering random values from external sensors is quite slow
   when compared to the processing speed of modern CPUs.
-  Gathering a single random value from an external source may take 1000s of CPU cycles,
+  Gathering a single random value from an external source may take thousands of CPU cycles,
   whereas many pseudo random generators can be implemented
   using relatively few instructions thus being able to run magnitudes faster. [^rng-speed]
 
@@ -66,8 +66,8 @@ offers some key benefits:
   Usually `RDSEED` is only used to gather random values for seeding, and is subsequently used in a pseudo random number generator which is much faster -- `RDRAND` only requires 65 cycles.
   Timings from [Agner Fog's instruction tables](https://www.agner.org/optimize/instruction_tables.pdf).
 
-As such, we *know* that they of course also use *pseudo random numbers* as opposed to true random numbers.
-So we have the chance to do something quite funny (at least in my humble opinion):
+So we can safely assume they also use *pseudo-random numbers* as opposed to true random numbers.
+Hence, we have the chance to do something quite funny (at least in my humble opinion):
 
 > [!check] The Funny Part
 > If one can figure out what the current state of the random generator is,
@@ -104,14 +104,14 @@ the order that we are used to.
 
 ## Starting from Nothing
 We can certainly say that Factorio makes use of a PRNG.
-The question now however is which one they actually chose.
+The question now, however, is which one they actually chose.
 
-To figure this out, an initial step was doing some rudimentary internet research.
+To figure this out, my first step was some rudimentary internet research.
 As the Factorio community is quite large and filled with many technically inclined individuals,
 *surely* someone must have asked this question before.
 After digging around a bit I found a post on the Factorio forums asking basically
-the same thing I wanted to know, 11 years ago already.
-In it, we also find following answer by @Cube - a former developer at Wube. They wrote:
+the same thing I wanted to know, though 11 years have passed since then.
+In that thread, we also find the following answer by @Cube, a former developer at Wube. They wrote:
 
 >[!cite] Cube - Tue Sep 30, 2014 12:27 pm - [forums.factorio.com - topic 5995](https://forums.factorio.com/viewtopic.php?t=5995)
 >\[...\] We chose taus88 mainly because it is the fastest from boost's generators.
@@ -119,7 +119,7 @@ In it, we also find following answer by @Cube - a former developer at Wube. They
 > 40% (?) faster), but there is no point, since the random numbers are not a
 > bottleneck for us.
 
-This already gives us a lead on where to look next: The boost random library.
+This already gives us a lead on where to look next: the `Boost.Random` library.
 There we find the following (abbreviated) implementation for the [taus88]
 generator:
 ```cpp
@@ -147,17 +147,17 @@ class linear_feedback_shift_engine {
 [taus88]: https://www.boost.org/doc/libs/1_88_0/doc/html/doxygen/headers/taus88_8hpp_1a3822a73532a76cfeca0db9888d676c72.html
 [linear_feedback_shift_engine]: https://www.boost.org/doc/libs/1_88_0/boost/random/linear_feedback_shift.hpp
 
-This means that taus88 consists of 3 "[linear_feedback_shift_engine]s" whose' results are XOR'ed together.
+This means that taus88 consists of 3 "[linear_feedback_shift_engine]s" whose results are XORed together.
 Note that this linear feedback shift engine is more commonly referred to as *LFSR*: *linear feedback shift register*.
 
-However, the forum post was already quite old -- already 8 years back when this project was started.
+Though by the time I began with this project that post was already 8 years old.
 Hence, I wanted to cross-check the information given on the forum against the most
 accurate source available: The game binary.
 
 While the game itself is closed source, the developers graciously ship a `.pdb` file containing the debug symbols alongside the game binary.
-This means, that we can generate a well annotated decompilation of the binary, to inspect the code and figure out what is going on under the hood.
+This means we can generate a well-annotated decompilation of the binary to inspect the code and figure out what is going on under the hood.
 To this end, I made use of the open source tool [Ghidra](https://github.com/NationalSecurityAgency/ghidra), pivoting to [Binary Ninja](https://binary.ninja/) in later parts.
-Regardless which tool one uses, in the game's code one can somewhat quickly find the `RandomGenerator` class to implement the `getInt()` function as follows:
+Regardless of which tool one uses, one can rather quickly find the `RandomGenerator` class in the game's code, where `getInt()` is implemented as follows:
 
 ```cpp
 uint RandomGenerator::getInt(RandomGenerator *this)
@@ -178,19 +178,17 @@ uint RandomGenerator::getInt(RandomGenerator *this)
 }
 ```
 
-The first thing which stands out, is that almost none of the 
+The first thing which stands out is that almost none of the
 constants used in the original `taus88` definition remained.
-This can be attributed to compiler optimizations doing constant folding reducing the number of operations needed. 
-Though the fact that we store 3 seeds for our RNG state is a first promising indicator that it is actually the same generator.
-Likewise, so is the fact that the states are updated independently of one another with the final result being the XOR of all states.
+This can be attributed to the compiler performing optimizations such as constant folding to reduce the number of required operations.
+Yet the fact that we store 3 seeds for our RNG state is a first strong indicator that it is indeed the same generator.
+Likewise, the states are updated independently of one another, with the final result being the XOR of all three states.
 
-Though to rid me all doubts on whether the two implementations are equivalent I rewrote both
-variants in python, such that they can be run using [`sympy`] -- a python library which allows for symbolic manipulations.
-Advancing both variants a single step indeed confirms that all bits of the corresponding registers update
-in the exact same fashion. In this instance I've
-used `sympy` as this would've been a tedious number of equivalence checks to do by
-hand ($3 \cdot 32 = 96$). The code responsible for proving this equivalence can be
-found [here]().
+To rid myself of all remaining doubt about whether the two implementations are equivalent, I rewrote both
+variants in Python so they can be run using [`sympy`], a Python library for symbolic manipulation.
+Advancing both variants by a single step confirms that all bits of the corresponding registers update
+in the exact same fashion. I used `sympy` here because doing these equivalence checks by
+hand ($3 \cdot 32 = 96$) would have been quite tedious.
 > [!warning] TODO
 > add link to my code which proves equivalence
 
@@ -203,11 +201,11 @@ online one even finds the statement that they are "*trivially breakable*"
 (which apparently in the language of security researchers means they are breakable).
 
 To understand what makes them "*weak*" and how we can exploit this weakness to predict future RNG calls,
-we first need to look at the underlying mathematics of LFSRs, which is subject of the next section.
+we first need to look at the underlying mathematics of LFSRs, which is the subject of the next section.
 
 ## LFSR Review
 To begin, we need to understand what the *linear feedback shift register* (LFSR) actually models.
-Initially we consider just a simple *register*.
+First, consider a simple *register*.
 It describes a collection of bits, aggregated into a single value $x$:
 $$ 
 x = x_{n-1} \dots x_2 x_1 x_0
@@ -219,7 +217,7 @@ Additionally, we consider two operations which operate on each individual bit:
 1. $x_i \oplus y_i$: The XOR operation takes 2 bits and returns 1 if the bits differ and 0 if they are equal.
    Note that this is equivalent to *addition* modulo 2.
 2. $x_i \cdot y_i$: The AND operation takes 2 bits and returns 1 if both bits are 1, otherwise it returns 0.
-   This now is equivalent to *multiplication* modulo 2.
+  This is equivalent to *multiplication* modulo 2.
 
 Now extend that notion of a register into a *shift register*.
 To shift, move all bits in the register downwards by taking each higher bit and shifting it 1 position down,
@@ -245,7 +243,7 @@ Hmmm... At least we no longer always arrive at an empty register.
 But the sequence when the last bit lights up is very predictable. 
 This is due to the fact that the information that we observe repeats every $n$ steps 
 -- each bit remains unmodified after all!
-Thanks to the low cycle count one can again pretty quickly spot the pattern produced by our current *feedback shift register*.
+Thanks to the low cycle length, one can again quickly spot the pattern produced by our current *feedback shift register*.
 To combat this we insert some *linear feedback*, by adding the feedback not
 only to the first bit, but also some intermediate bits.
 Note that addition here means XOR, as we are working with individual bits:
@@ -278,12 +276,12 @@ In particular, given the state $x^{(t)}$ at time $t$ we now know how to:
 > A single step then corresponds to multiplying the current state $S(X) = \sum_{i=0}^{n-1} x_i X^i$
 > with $X$ (this shifts the bits up one index).
 > 
-> Finally, by doing this modulo the feedback polynomial $P(X)$ of degree $n$ which needs to be *irreducible* we can ensure that the cycle length is maximal, i.e. $2^n - 1$.
+> Finally, by doing this modulo a feedback polynomial $P(X)$ of degree $n$ that is *primitive* (and therefore irreducible), we can ensure that the cycle length is maximal, i.e. $2^n - 1$.
 > $P(X)$ then specifies to the spaces where the feedback is inserted, i.e. the bits which are XORed with the feedback bit.
 > In other words, not all feedback configurations are equally good, and the choice of feedback taps is crucial to ensure a long cycle length.
 
 ### LFSRs are linear
-Previously all examples started at a some arbitrary state for $x$,
+Previously all examples began with some arbitrary state for $x$,
 i.e. states where all bits were set to either 0 or 1.
 From those we generated the subsequent states and corresponding outputs.
 However, to crack the PRNG what we actually care about is the *inverse* problem.
@@ -302,7 +300,7 @@ Note that whenever we observe $x_i \oplus x_i$ the $x_i$ cancels out, allowing u
 
 Moreover, I already teased the use of the *linear* property of the feedback we used above.
 In particular $(\mathbb{F}_2, \oplus, \cdot)$ forms a *field* (see [Wikipedia: Field](https://en.wikipedia.org/wiki/Field_(mathematics))).
-This field is commonly known as the *Gallois field* $\text{GF}(2) = \mathbb{Z}/2\mathbb{Z} = \mathbb{F}_2$
+This field is commonly known as the *Galois field* $\text{GF}(2) = \mathbb{Z}/2\mathbb{Z} = \mathbb{F}_2$
 or the *modular arithmetic* mod 2.
 Using this *field* structure we can then also consider the *vector space* (see [Wikipedia: Vector Space](https://en.wikipedia.org/wiki/Vector_space#Definition_and_basic_properties)
 ) spanning all values
@@ -322,7 +320,7 @@ applied pointwise to each coordinate.
 > at most 8 rows are necessary.
 
 <!-- 
-> [!note]- Gallois Field $\text{GF}(p)$
+> [!note]- Galois Field $\text{GF}(p)$
 > If $p \in \mathbb{N}$ is a prime number, then $\text{GF}(p) = \mathbb{F}_p = \mathbb{Z}/p\mathbb{Z}$ is a field.
 > 
 > $\mathbb{Z}/p\mathbb{Z}$ consists of elements which can be written in the form
@@ -337,11 +335,11 @@ applied pointwise to each coordinate.
 > \end{align*}
 > $$ -->
 
-Personally, after getting an introduction into linear algebra and the used vector spaces,
-I subsequently only saw them applied to either $\mathbb{R}^n$ or if spicy to $\mathbb{C}^n$.
+Personally, after getting an introduction into linear algebra and vector spaces,
+I subsequently saw them only ever applied to either $\mathbb{R}^n$ or, if spicy, to $\mathbb{C}^n$.
 However, the original definition of a vector space is kept very generic on purpose!
 It allows *any* structure satisfying the necessary properties to be manipulated in the same way,
-allowing us to apply well know algorithms you maybe have only seen yet applied to systems described by 
+allowing us to apply well-known algorithms that you may have only seen applied to systems described by
 $\mathbb{R}^{m \times n}$ matrices to arbitrary matrices, regardless of the underlying field $F$.
 And as luck would have it, the previously defined operations XOR and AND on the bits span a *field*!
 
@@ -358,7 +356,7 @@ where $T \in \text{GF}(2)^{n \times n}$.
 Note that like the bits in the state vector, each individual entry in the matrix is a value in $\text{GF}(2)$,
 i.e. it's either 0 or 1.
 In particular this allows us to display this matrix as a bitmap, where a bright entry means a 1 and a dark pixel represents a 0.
-For the toy LFSRs we saw previously this looks as follows:
+For the toy LFSRs we saw previously, this looks as follows:
 
 > [!warning] TODO
 > Add an LFSR component here, joined with the transition matrix T.
@@ -371,8 +369,8 @@ a = (a << 12 ^ a >> 6) & 0x1fff ^ a >> 19 ^ a << 12;
 ```
 
 This can be written out for each individual bit and evaluated.
-In turn we obtain a system of 32 equations, as each LFSR is defined over `uint32_t` words which has 32 bits.
-Note that some of the bits are actually redundant due to the construction of the LFSRs in the boost library $k$ (LFSR size) is chosen smaller than $w$ (word size).
+In turn we obtain a system of 32 equations, as each LFSR is defined over `uint32_t` words, which have 32 bits.
+Note that some of the bits are actually redundant due to the construction of the LFSRs in the Boost library: $k$ (LFSR size) is chosen smaller than $w$ (word size).
 
 <Foldout>
 <Katex displayMode latex={String.raw`\begin{array}{rrrrrrrrc}
@@ -432,8 +430,8 @@ Consider the same toy LFSR as shown above:
 By modifying the way in which the data flows, a new variant can be constructed, 
 which allows us to run the same LFSR but in reverse.
 These changes originate from the following:
-1. In the "*forwards mode*" each step sets the top most bit $x_{n-1}$ to the previous states bottom most bit value $x_0$.
-   This means, the feedback arrow can now originate from the topmost bit $x_{n-1}$ instead.
+1. In the "*forwards mode*" each step sets the topmost bit $x_{n-1}$ to the previous state's bottommost bit value $x_0$.
+  This means the feedback arrow can now originate from the topmost bit $x_{n-1}$ instead.
 2. If a bit is just shifted from above with no XOR between, then
    this step is reversible by just flipping the direction of the shift.
 3. However, if it is a combination of both the upper bit and feedback bit, 
@@ -448,7 +446,7 @@ LFSR diagram to obtain the following "*reverse mode*" LFSR:
 
 In mathematical terms what we have just shown is that if $T$ exists which corresponds to a single forwards step,
 then we can always construct another matrix $T^{-1}$ which perfectly reverses the previous step.
-I.e. we have found an inverse:
+i.e. we have found an inverse:
 $$ 
 T^{-1} T = I
 $$
@@ -480,7 +478,7 @@ such as [Gaussian elimination](https://en.wikipedia.org/wiki/Gaussian_eliminatio
 
 ### Combining multiple LFSRs
 We've seen that we can solve the state of a single LFSR as a linear equation of
-the form $Ax=b$ where all components are computed modulo 2. Remember however that
+the form $Ax=b$ where all components are computed modulo 2. Remember, however, that
 the full RNG result is determined by 3 independent LFSRs whose output we XOR together.
 We can model this as having 3 different states $s_1, s_2, s_3 \in \text{GF}(2)^n$
 each with a corresponding transition matrix $T_1, T_2, T_3$. If we then stack all
@@ -531,7 +529,7 @@ $$
 o^{(t+2)} = \begin{bmatrix}T_1^2 & T_2^2 & T_3^2\end{bmatrix}s^{(t)}
 $$
 
-Thus, we realize that if we observe 3 states in a row we obtain the following
+Thus, we realize that if we observe 3 full outputs in a row we obtain the following
 system of equations:
 
 $$
@@ -551,7 +549,7 @@ $$
 > If we consider the LFSRs as given by the boost library - and the parameters
 > used to instantiate them - we will notice that they operate on $n=32$ bit words,
 > while the actual LFSR sizes are 31, 29 and 28 respectively. This means that a
-> couple bits are unaccounted for. In their cases these are the least significant
+> couple of bits are unaccounted for. In this case these are the least significant
 > bits, which will just be copies of the bits the LFSR would have previously
 > output - or in terms of the linear equations: the least significant bits are
 > linearly dependent on the higher significant bits.
@@ -564,8 +562,8 @@ $$
 > LFSRs to $31\times31$, $29\times29$ and $28\times28$ respectively, restoring
 > the full rank (and my claim that the transition matrices are invertible by construction).
 > If these reduced matrices are then used to compute the internal state from the
-> observed outputs, we can compute the remaining lower bits via the values of the
-> higher bits, allowing us to restore the full state. This is though not necessary
+> observed outputs, we can compute the remaining lower bits from the values of the
+> higher bits, allowing us to restore the full state. This is not strictly necessary
 > to do, as should we decide to simply step the computed state as is (e.g. with
 > the linearly dependent bits filled to 0) then we will obtain the true state
 > of all bits after a single step forward, as this will include computing the
@@ -574,32 +572,32 @@ $$
 
 ## Implementation Strategy
 
-The prior result of inverting the observation matrix $A$ works already - in fact
-it is the first implementation of the solver which I implemented inside my python
-solver. For the observations I used the Factorio LUA API to generate 3 consecutive
-random numbers. This could be used to determine the internal state already and
-predict future RNG outputs see: [First recording of the method working](https://youtu.be/4DblzCYfArU)
+The earlier result of inverting the observation matrix $A$ already works. In fact,
+it was the first solver implementation I built in Python.
+For the observations, I used the Factorio Lua API to generate 3 consecutive
+random numbers. That was enough to recover the internal state and
+predict future RNG outputs; see: [First recording of the method working](https://youtu.be/4DblzCYfArU)
 
 Before we try to implement it with only the resources available to us
-in game, we still have to inspect two theoretical hurdles:
+in-game, we still have to inspect two theoretical hurdles:
 1. Currently we need the result of **consecutive calls**.
    These might not be available to us.
 2. Moreover, the **full result width** i.e. all 32 bits at once of the PRNG calls are required for our observations.
-   With pure game mechanics these are not necessarily observable.
+  With pure game mechanics, these are not necessarily observable.
 
 As such, let's take a look at both of these issues, and how we can address them.
 
 ### Consecutive calls
 In the previous derivation we utilized the states $s^{(t)}$, $s^{(t+1)}$ and $s^{(t+2)}$
 which correspond to using the full width of 3 *consecutive* calls.
-As we however are not necessarily the only thing in the simulation requesting
-RNG values we need to consider a non isolated case.
+As we are not necessarily the only system in the simulation requesting
+RNG values at any given time, we need to consider a non-isolated case.
 There are several ways to tackle this:
-1. If we have a method of counting the calls made between the calls we can skip
+1. If we have a method of counting the calls made between observations, we can skip
    the non observed results by generalizing the previous result to use $o^{(t+n)} = T^{n} s^{(t)}$ instead,
    where $n$ is the number of calls we skipped until the next measurement.
 2. Alternatively, we try to force the measurements to occur consecutively.
-   This can be done by disabling all other sources in game which can interfere
+  This can be done by disabling all other sources in-game which can interfere
    with the measured calls, doing our necessary calls in order and computing / manipulating from there.
 3. The latter can be extended by venturing into the realm of *sub-tick mechanics*.
    Every 1/60th of a second, the game performs an update step, aka a *tick*.
@@ -610,12 +608,12 @@ There are several ways to tackle this:
    placing our *entropy generators* in a consecutive block within this queue,
    we force that the RNG calls are gapless, ensuring proper state reconstruction can occur.
 
-For my implementations I chose to pursue both option 2 and 3.
+For my implementation I chose to pursue both option 2 and 3.
 The former, as it does not rely on internal update orders, is the fallback method which should *always*
 work (as long as the devs do not change the RNG away from `taus88`).
-Meanwhile in theory, the latter approach allows for way faster state readout and more
+Meanwhile, in theory, the latter approach allows for much faster state readout and more
 robustness against extraneous outside calls.
-In practice however, it appears somewhat *flaky*, breaking at seemingly arbitrary times.
+In practice, however, it appears somewhat *flaky*, breaking at seemingly arbitrary times.
 
 <!-- 
 > [!note] On the Update Order
@@ -646,13 +644,13 @@ questions about the output, depending on the chosen method. Some examples are:
 - The quality level of the output. We can measure if it rose in level,
   and if yes by how many.
 
-I'm going to focus on the first of the 2 methods, just observing the amount of
+I'm going to focus on the first of the two methods, just observing the amount of
 produced items (as this was the only source of information I had available when
 I started this project). The thing to realize is that answering any of these
 questions yields us only information about some of the *top bits* of the RNG
 roll result.
 
-Let's stick with the example of refining uranium ore into U235 and U238.
+Let's stick with the example of refining uranium ore into U-235 and U-238.
 For this we have 2 production results:
 - U238 occurs with 99.3% probability as a result and
 - U235 with a 0.7% chance.
@@ -660,7 +658,7 @@ For this we have 2 production results:
 <!-- TODO: maybe add the `collectMaterials` code here -->
 To generate these 2 outputs, the RNG is queried twice by a single result,
 generating 2 subsequent RNG calls.
-As these chances being both quite low / high we gain important knowledge whenever the low probability event occurs. 
+Because these probabilities are very extreme, we gain important knowledge whenever the low-probability event occurs.
 The resulting item gets generated if the respective inequality holds,
 where $r_i \in [0, 2^{32}-1]$ is the computed RNG roll:
 $$
@@ -670,14 +668,14 @@ r_2 \leq \left\lfloor 0.007 \cdot 2^{32} \right\rfloor &=\;&     30\,064\,771_{1
 \end{alignat*}
 $$
 
-In particular: If U238 **was not** generated, we know that the first 7 bits are 1 and if U235 **was** generated then the first 7 bits were 0.
-Otherwise, we have no real knowledge about the generator / the roll bits.
+In particular: if U238 **was not** generated, we know that the first 7 bits are 1; and if U235 **was** generated, the first 7 bits were 0.
+Otherwise, we have no meaningful information about the rolled bits.
 
 Cool! But which recipe will yield us the highest amount of information each time it completes?
 As the more information we obtain with a single crafting cycle, the fewer crafts we require and the faster we can determine the internal state.
 
-As we saw above, the only information we can observe is determined by the top bits, and whether we obtained the item or not.
-If we now estimate that the rolls are actually evenly distributed, we can compute the expected value of information gained with each roll & observation:
+Like we saw above, the only information we can observe is determined by the topmost bits, and whether we obtained the item or not.
+If we now estimate that the rolls are actually evenly distributed, we can compute the expected amount of information gained with each roll and observation:
 $$
 \begin{align*}
 \underbrace{0.007 \cdot 7\,\text{bit}}_{\text{no U238}} + \underbrace{0.993 \cdot 0\,\text{bit}}_{\text{U238}} &= 0.049\,\text{bit}\\
@@ -685,18 +683,18 @@ $$
 \end{align*}
 $$
 
-This means we can expect a total of 0.098 bit each successful crafting cycle!
-If we observe the pattern a bit longer we might notice that the number of leading bits
+This means we can expect a total of 0.098 bits per successful crafting cycle.
+If we observe the pattern a bit longer, we might notice that the number of leading bits
 obtained in each positive case (i.e. where the probability is 0.7%) is
 $\lfloor-\log_2(p)\rfloor$ where $p$ is the probability of the event occurring.
 A similar thing holds for $p > 0.5$ where the result is instead leading 0 bits observed.
 This allows us to compute the expected number of bits we measure for an event with probability $p$.
-In whole, it is writable as:
+Overall, it can be written as:
 $$
 \mathbb{E}[\text{bits}] = p \left\lfloor -\log_2(p) \right\rfloor + (1-p) \left\lfloor -\log_2(1-p) \right\rfloor
 $$
 This function is also shown below.
-The plot induces the following facts:
+Its plot indicates the following:
 - The event which has the highest expected number of observed bits is situated at the event 50% split.
   At that point we can in fact always observe the most significant bit.
 - While events closer to 0/1 allow us to infer more bits whenever they succeed, 
@@ -706,16 +704,16 @@ The plot induces the following facts:
 <!-- Expected bits plot, embed svg into this page to allow style reusage - needs to be imported above. -->
 {@html rngplot}
 
-What we in fact just calculated can be seen as a discretized version of the
-[Shannon Entropy](https://en.wikipedia.org/wiki/Entropy_(information_theory)).
+What we just calculated can be seen as a discretized version of
+[Shannon entropy](https://en.wikipedia.org/wiki/Entropy_(information_theory)).
 As such, we have a measure applicable to all available recipes allowing us to identify those which yield the largest amount of information per craft.
 By extracting the relevant recipe data from the raw game dump [^data_dump] we can programmatically compute the entropy for each recipe.
 
 [^data_dump]: Factorio actually provides one with command line arguments.
-  One of these is `--dump-data` which outputs a JSON file containing the processed prototypes as they are loaded in game.
+  One of these is `--dump-data` which outputs a JSON file containing the processed prototypes as they are loaded in-game.
   This can then be parsed for further processing, such as extracting the various recipes.
 
-Doing so yields the following table of recipes and their corresponding expected bits of information per craft along side how long each craft takes:
+Doing so yields the following table of recipes and their corresponding expected bits of information per craft, alongside how long each craft takes:
 
 <figure>
   <Foldout --collapsed-height="400px">
@@ -727,7 +725,7 @@ Doing so yields the following table of recipes and their corresponding expected 
 </figure>
 
 
-As we can see there are *waaay* better recipes to utilize for extracting information from the game.
+As we can see, there are *waaay* better recipes for extracting information from the game.
 One might think that [scrap recycling](https://wiki.factorio.com/Scrap) would yield a lot of information,
 but with an entropy of $2.05$ it is only slightly above recipes like recycling [repair packs](https://wiki.factorio.com/Repair_pack) which have an entropy of $2$.
 This is due to the fact that recycling repair packs (and similar recipes with ingredient count $= 4n+2$)
@@ -735,31 +733,31 @@ yield exactly one bit of information of the RNG output in either case,
 as it creates a perfect $50 / 50$ split on whether the additional item will be created or not.
 There are obviously alternative recipes such as the [oil refinery](https://wiki.factorio.com/Oil_refinery)
 which has an entropy of $4.5$.
-These however are also quite a bit more expensive and slower than doing repair pack recycling.
+These, however, are also quite a bit more expensive and slower than repair pack recycling.
 
-As such, I chose to implement the state readout using the repair pack recycling method, as they are cheap, fast to craft and unlocked early in game.
+As such, I chose to implement the state readout using the repair pack recycling method, as repair packs are cheap, fast to craft, and unlocked early in-game.
 
 ## Actual Implementation
-To actually implement the reversal and manipulation of the RNG I've split the computation into the following steps:
+To actually implement the reversal and manipulation of the RNG, I've split the computation into the following steps:
 1. **Sampling** the current RNG through observations,
 2. Computing the **current internal** RNG state,
 3. Predicting the **future internal** states,
 4. Calculating corresponding **quality levels** for each future call, and finally
 5. **Making use of** the predicted levels with some adapters.
 
-As already alluded to in [[#LFSR but backwards]] we will need to compute a matrix vector product for both of these steps.
+As already alluded to in [Inverting an LFSR](#inverting-an-lfsr), we will need to compute a matrix-vector product for both of these steps.
 Now the question is where do we get the matrices, and where do we get the vectors from?
 
 ### Sampling the RNG
 The current state will be computed from *observations* made when recycling [repair packs](https://wiki.factorio.com/Repair_pack). 
 Each recycling operation will yield exactly 2 bits of information, 1 for each resulting item.
-This in turn means, that we require $88/2=44$ recycling operations to have enough information to fully reconstruct the state.
-As each result provides us with exactly one bit of information - the top most bit of the RNG call - the 88 observations can be written as: 
+This in turn means that we require $88/2=44$ recycling operations to have enough information to fully reconstruct the state.
+As each result provides us with exactly one bit of information - the topmost bit of the RNG call - the 88 observations can be written as:
 $$
-o^{(t)}, o^{(t+1)}, \dots, o^{(t+87)} \in GF(2)
+o^{(t)}, o^{(t+1)}, \dots, o^{(t+87)} \in \text{GF}(2)
 $$
 
-A single unit measuring $o^{(t+2k)}$ and $o^{(t+2k+1)}$ then can look as follows:
+A single unit measuring $o^{(t+2k)}$ and $o^{(t+2k+1)}$ may look as follows:
 
 <figure>
   <img alt="Screenshot of a single entropy measurement unit." src="./factorio-rng/img/ingame_entropy_read_single.png" />
@@ -771,13 +769,13 @@ It has the following stages:
 2. The recycler will recycle the item, and upon completion query the RNG for 2 new integers, determining whether extra items (either 0 or 1) are produced.
 3. Depending on whether the items are produced or not, they are placed into the *provider chest*.
    This chest is set to read the contents, providing the observation to the red wire.
-4. These observations directly correspond to the top most observed bits $o^{(t+k)}$ due to the 50% chance of output.
+4. These observations directly correspond to the topmost observed bits $o^{(t+k)}$ due to the 50% chance of output.
    Further processing occurs through the decider combinators below.
 5. Before the next call can occur, we clear the provider chest by making use of the *trash unrequested* option, alongside the *enable/disable* signal we can send over the green wire connected to it, which temporarily pauses the auto trashing behavior.
 
 The above unit will therefore always provide us with 2 bits of information.
-To reconstruct the full state quickly, we copy this singular unit 44 times, yielding a total of 88 bits.
-This then comes out to:
+To reconstruct the full state quickly, we copy this unit 44 times, yielding a total of 88 bits.
+This then looks like:
 
 <figure>
   <img alt="All entropy units joined together." src="./factorio-rng/img/ingame_entropy_read_all.png">
@@ -787,21 +785,21 @@ This then comes out to:
 Of note here is the manner in which the individual units are queried.
 There are 2 approaches:
 1. Either each is triggered with a 1 tick delay, ensuring that they are always queried in the same order.
-   This however requires us to not have *any* other RNG running in the meantime,
+  This, however, requires us to not have *any* other RNG running in the meantime,
    as RNG calls which occur in between will mess up the expected ordering.
 2. Alternatively, we can use same tick shenanigans.
-   By splitting the red wire connecting the inserters with a 1 tick delay combinator in front of every inserter this can be achieved.
+  By splitting the red wire connecting the inserters with a 1 tick delay combinator in front of every inserter, this can be achieved.
    Connecting the inputs to the delay first creates a shared circuit network.
    Then sequentially connecting all outputs of the delays to the corresponding inserters will create a standalone network for each inserter.
    As the game needs to update the networks in some manner, I bank on the fact that
    it will iterate through the list ordered by the network ID.
    This ensures that the RNG calls all happen in the same tick, with no ticks interfering.
-   Note that the wire construction can also be done using a 2 stage blueprint.
+  Note that the wire construction can also be done using a 2-stage blueprint.
 
 > [!note] Note - Regarding the Same Tick Behavior
 > While the same tick stuff seems to work in practice, I have not actually confirmed that this is how the game works under the hood.
 > It can be brittle at times, as it seems to arbitrarily break at random times.
-> In those cases simply reconstructing the wires allows it to work again.
+> In those cases, simply reconstructing the wires allows it to work again.
 
 ### Determining the current state
 Each unit produces only single bit observations as a result, so we need to apply a similar strategy as we did before.
@@ -838,16 +836,16 @@ $$
 \tilde A s^{(\tilde t)}=o^{(\tilde t-88,\dots,\tilde t-1)}
 $$
 This can be read as us computing the next internal RNG state from the previously done observations.
-Now since there are only 88 bits which are actually linearly codependent, we cannot compute a full inverse.
+Now since there are only 88 bits which are actually linearly independent, we cannot compute a full inverse.
 However, a pseudo-inverse will suffice.
 Especially since we are interested in the states after -- for which the lowest bits are entirely described by the most significant bits.
-This means, that even a single step forward will deterministically set those previously unknown bits so we are all fine.
+This means that even a single step forward will deterministically set those previously unknown bits, so we are all fine.
 
 The really neat thing about this entire endeavor is that matrix $A$ and similarly $\tilde A$ do not depend on any dynamic state.
-As such $\tilde A^{-1} \in GF(2)^{88 \times 96}$ can precomputed in python to be subsequently used in Factorio. 
+As such, $\tilde A^{-1} \in \text{GF}(2)^{88 \times 96}$ can be precomputed in Python and subsequently used in Factorio.
 
-Hence we only need to implement a matrix vector multiply in $GF(2)$ in game.
-To do so, remember the fact that any matrix vector product can be seen as a weighted sum of the columns of the matrix weighed by the entries in the vector:
+Hence we only need to implement a matrix-vector multiply in $\text{GF}(2)$ in-game.
+To do so, remember that any matrix-vector product can be seen as a weighted sum of the matrix columns weighted by the entries in the vector:
 $$
 Ax = \sum_{k=1}^n x_k [A]_k = x_1 \overset{\rightarrow}{a}_1 + \dots + x_n \overset{\rightarrow}{a}_n
 $$
@@ -858,7 +856,7 @@ $$
 Here $[\tilde A^{-1}]_k$ is the $k$-th column of $\tilde A^{-1}$ while $o^{(t+k)}$ is the $k$-th bit observation performed.
 In practice this equation is computed in 2 parts.
 
-First each previous measurement unit computes a pointwise scalar vector multiplications of $o^{(t+k)} \in \{0, 1\}$ and vector $[\tilde A^{-1}]_k$.
+First, each measurement unit computes a pointwise scalar-vector multiplication of $o^{(t+k)} \in \{0, 1\}$ and vector $[\tilde A^{-1}]_k$.
 This is done via the *decider combinator* mentioned above doing "further processing".
 If the resulting item was not observed ($= 0$) then the roll was above the threshold and we have $o^{(t+k)} = 1$, meaning this column needs to be accumulated otherwise it is not.
 The vector $[\tilde A^{-1}]_k$ is stored in the constant outputs of the decider combinator, where only the bits which are 1 are actually output.
@@ -871,10 +869,10 @@ As such the vectors are represented by 96 different signals.
 
 Finally we require the XOR of all these vectors to obtain the final state.
 This can be achieved via implicit addition [^implicit-addition].
-Summing the values of a single signal and extracting only the last bit of this sum is equivalent of taking the XOR over all of them.
-As such, by wiring all decider outputs together and a single *arithmetic combinator* can perform the bit extraction by ANDing the pointwise sums with 1.
+Summing the values of a single signal and extracting only the last bit of this sum is equivalent to taking the XOR over all of them.
+As such, by wiring all decider outputs together, a single *arithmetic combinator* can perform the bit extraction by ANDing the pointwise sums with 1.
 
-As now each signal corresponds to a single bit of the 3 32-bit LFSR states,
+As each signal now corresponds to a single bit of the 3 32-bit LFSR states,
 we can make use of a set of decider combinators to sum up all the corresponding bits of each active signal.
 Thus we have 3 signals, each containing the current state of the game's RNG.
 
@@ -895,18 +893,18 @@ $$
 T^ks^{(t)} = s^{(t+k)}
 $$
 This is computed for $k=1,2,\dots,N$, where $T$ and $s$ are different between the 3 sub LFSRs.
-From this we can again rewrite these matrix vector multiplications as:
+From this we can again rewrite these matrix-vector multiplications as:
 $$
 s^{(t+k)} = \bigoplus_{j=1}^{32} s^{(t)}_j \cdot [T^k]_j
 $$
 where $[T^k]_j$ is the $j$-th column of $T^k$. These columns can be stored as 32 bit integers, as $T^k \in GF(2)^{32 \times 32}$.
-Hence the skip ahead equation can be implemented in parallel for all $k$ steps as follows:
+Hence the skip-ahead equation can be implemented in parallel for all $k$ steps as follows:
 1. Split the packed state $s^{(t)}$ into its individual bits $s_j^{(t)}$.
    Represent these as individual signals again (*arithmetic combinator* on the left).
 2. The pointwise scalar vector multiplication $s_j^{(t)}$ with all the different
    vectors $[T^k]_j$ will either include all the vectors in the corresponding $k$-th state or not,
    thus we can implement this via a *decider combinator* again.
-   This time however I store the constants in a separate *constant combinator* -- it can output more signals at once.
+  This time, however, I store the constants in a separate *constant combinator* -- it can output more signals at once.
    I opted to predict 1000 forward steps in parallel.
 
 <figure>
@@ -919,7 +917,7 @@ Hence the skip ahead equation can be implemented in parallel for all $k$ steps a
    as the vectors are now not represented by 32 different signals but instead via a single 32 bit signal value. 
    Thus we have to use more *arithmetic combinators*.
    I've opted to use a *binary tree* to pairwise XOR sets of vectors together,
-   as this is a known fast reduction algorithm for prefix sums (which this is).
+   as this is a known fast reduction strategy for prefix sums (which this is).
 
 <figure>
   <img alt="Parallel look-ahead for a single LFSR" src="./factorio-rng/img/ingame_multi_step_single.png">
@@ -927,10 +925,10 @@ Hence the skip ahead equation can be implemented in parallel for all $k$ steps a
 </figure>
 
 ### Quality prediction
-Now that we have the next call results of the RNG before the actual in game calls
+Now that we have the next RNG call results before the actual in-game calls
 happen, we need to make them usable for our purpose. This basically means implementing
-some fashion of the `rollQuality` function from the game.
-A reverse engineered version of the function can be seen here implemented in pseudo C++:
+some form of the `rollQuality` function from the game.
+A reverse-engineered version of the function can be seen below, implemented in pseudo-C++:
 ```cpp
 // Fixedpoint value of the module effect from -32.768 to 32.767
 // e.g. 10% quality would be a value of 100
@@ -987,25 +985,25 @@ If we take a look at how the function is implemented in the game we can see that
 it basically just takes the RNG roll and compares it against some thresholds. It
 stops as soon as it finds a threshold which is no longer beaten by the roll.
 
-This means that each craft which involves quality rolls will take exactly 1 call.
+This means that each craft which involves quality rolls will take exactly 1 RNG call.
 And for each call we can compute the expected quality level by just comparing against
 all the thresholds, which stay constant during the game. Thus they can be precomputed
 in-game with some arithmetic combinators.
 
 <figure>
-  <img alt="Computing the quality levels from RNG states in game." src="./factorio-rng/img/ingame_quality_compute.png">
-  <figcaption>Computing the quality levels from RNG states in game.</figcaption>
+  <img alt="Computing the quality levels from RNG states in-game." src="./factorio-rng/img/ingame_quality_compute.png">
+  <figcaption>Computing the quality levels from RNG states in-game.</figcaption>
 </figure>
 
 The calculator below shows the required threshold for each quality level, as well
 as the expected amount of each quality level for a given bonus.
-Note that when the threshold exceeds $2^{32}-1$ i.e. the `uint32_t` maximum value,
+Note that when the threshold exceeds $2^{32}-1$, i.e. the `uint32_t` maximum value,
 we always upgrade, which is indicated by placing the thresholds in brackets.
 
 <QualityCalculator/>
 
 ### Adapters
-Yippee, we now can compute the threshold for RNG calls before they even occur in game.
+Yippee, we can now compute the relevant RNG outcomes before the corresponding calls even occur in-game.
 Now the question is what can we do with that?
 I have by now experimented with several -- what I call -- adapters,
 which take in these predictions, and do some funny stuff with them.
@@ -1016,7 +1014,7 @@ Beginning with the first that I've implemented:
 It takes the sequence of future output qualities, and displays them next to the assembler,
 similar to the "Next Up Pieces" queue in *Tetris*.
 Each time a craft is completed, it advances the window into the future outputs by one,
-keeping the display relevant and on edge all the time.
+keeping the display relevant at all times.
 
 The next one was the following:
 > [!warning] TODO: Add yt video of "sort quality"
@@ -1026,14 +1024,14 @@ The assembler which is selected depends on the next output quality.
 In turn this leads to the 5 assemblers outputting the items in a sorted fashion,
 where each belt only ever carries a single type of quality, ordered from left to right in increasing quality.
 
-Finally the goal that I've been interested from the get go:
+Finally, the goal that I've been interested in from the get-go:
 > [!warning] TODO: Add yt video of "automated legendary"
 
 This method encapsulates the entire prediction and crafting loop into a closed system, 
 which can do the entire thing (predict and craft) autonomously.
 It involved additional work to calculate how many items need to be scrapped in between crafts to skip to the relevant RNG call,
 as well as enqueuing these skip counts from the predicted raw RNG results which turn sparse after thresholding,
-together with feeding the future RNG predictions back into it self to extend the time horizon. 
+together with feeding the future RNG predictions back into itself to extend the time horizon.
 
 
 ## Limitations
@@ -1059,7 +1057,7 @@ The main takeaways from that graph are as follows:
 Note that most of these generators have only a single instance which gets shared
 across the entire `Map` object (i.e. across all surfaces you have the same state).
   
-This sharing of rng state especially means that we would need to also predict
+This sharing of RNG state means that we would also need to predict
 the number of calls made outside of our machine between the individual cycles
 to keep a consistent state.
 Otherwise we quickly desync between the computed state and the actual game state.
@@ -1070,17 +1068,17 @@ enough such that the rng calls are predictable for all objects using the same ge
 At that point you are basically just reimplementing major parts of Factorio
 inside of Factorio (which while interesting is not the task at hand).
 
-A less optimal alternative is to simply instead resample from time to time, and
-hope that there are not too many calls which have been interwoven in the mean time.
+A less optimal alternative is to resample from time to time,
+and hope that there are not too many calls interwoven in the meantime.
 
-However to use this properly the built factory needs to be essentially built with
-the goal of RNG manipulation in mind - To be able to mitigate most common sources
+However, to use this properly, the factory needs to be built with
+the goal of RNG manipulation in mind, to mitigate the most common sources
 of calls on the `generalRandomGenerator`. These include:
 - **Mining Drill Resource Selection** - Hence all mining drills should be able to
   be turned off to place them in an idle state.
 - **Fulgoran Lightning Strikes** - These occur during nighttime on Fulgora
   [about every 10 seconds per chunk](https://wiki.factorio.com/Fulgora#Lightning).
-  To circumvent them sparking calls during our manipulation it needs to be done
+  To circumvent those calls interferring with the manipulation, it needs to be done
   during daytime there.
 - **Other RNG Crafts** - Not only quality, but any recipe with a random output will
   make calls to the generator. Either implement capabilities to turn them off, or
@@ -1089,7 +1087,7 @@ of calls on the `generalRandomGenerator`. These include:
 The following are speculation and I have not tested yet in what capacity they actually
 influence the state:
 - **Explosions / Fire** - This means no biters nor asteroids should be running
-  into landmines nor should there be rocket turrets or any active artillery.
+  into landmines, nor should there be rocket turrets or any active artillery.
 - **Trees dropping Leaves** - Happens when trees are deconstructed, so no active
   agriculture towers.
 - **Particles Spawning** - Particles are spawned with a random velocity, which in
@@ -1101,26 +1099,26 @@ up with the game. For instance a single scrap recycling craft requires 12 calls
 to simulate. 
 
 ## Conclusion
-All in all, the fact is that the RNG used in Factorio is quite weak, and even
+All in all, the RNG used in Factorio is quite weak, and even
 completely reversible in its entirety within the game.
-Proper exploitation however is very difficult to do, and once one has access to
-many of the required resources might not even be required anymore, as simply
-increasing production means, one reaches the law of big numbers territory, i.e.
-the average production is close to the real production results.
+Proper exploitation, however, is quite difficult.
+And once one has access to many of the required resources, it might not even be worth it anymore,
+because simply increasing production pushes you into the law-of-large-numbers territory,
+i.e. average production approaches expected production.
 
-None the less, this project was quite a learning experience encompassing:
+Nonetheless, this project was quite a learning experience, encompassing:
 - Learning about *Galois Fields* and their combination with vector spaces.
-- Reversal of the game binary, and figuring out the relevant control flows.
+- Reverse engineering the game binary, figuring out the relevant control flows.
   Even splurging on [Binary Ninja](https://binary.ninja/) which was so much more
   useful for reverse engineering than the open source alternative 
-  [Ghidra](https://github.com/NationalSecurityAgency/ghidra).
-- Reimplementing the RNG, the matrix solver and parallel matrix multiplier all
-  in game in an efficient manner.
+  [Ghidra](https://github.com/NationalSecurityAgency/ghidra), mainly due to it not crashing when trying to map the entire game binary and its subjectively easier to use API.
+- Reimplementing the RNG, the matrix solver, and a parallel matrix multiplier,
+  all in-game in a somewhat efficient manner.
 
-P.s. I've begun this project end of April 2024, and finally got over being lazy
+P.S. I began this project at the end of April 2024, and finally got over being lazy
 and published it more than a year later.
-In the mean time someone else also posted about this on the
+In the meantime someone else also posted about this on the
 Factorio forums [Random number manipulation possibilities](https://forums.factorio.com/viewtopic.php?p=660560).
 As far as I can tell they stopped at a similar point as I did in one of the earlier
 stages in the project, that is predicting the state externally with a separate
-python script from some observations.
+Python script from some observations.
