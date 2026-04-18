@@ -54,12 +54,12 @@
 	</ol>
 {/snippet}
 
-<div class="toc-sidebar {open ? 'open' : 'closed'}">
+<div class="toc-sidebar {open ? 'open' : 'closed'}" bind:this={tocSidebarEl}>
 	<button class="toc-burger" onclick={toggleToc} aria-label="Toggle Table of Contents">
 		<RiMenuFill size="28" />
 	</button>
 	{#if open}
-  <!-- TODO: remove the snapping behaviour when hiding/showing the ToC -->
+		<!-- TODO: remove the snapping behaviour when hiding/showing the ToC -->
 		<nav class="toc" transition:fly={{ x: 50, duration: 400 }}>
 			{@render tocList(headings)}
 		</nav>
@@ -69,15 +69,17 @@
 <style>
 	.toc-sidebar {
 		position: sticky;
-		top: var(--size-7);
-    overflow: visible;
+		top: var(--size-10);
+		overflow: visible;
 	}
 	.toc-burger {
 		background: var(--surface-4);
+		display: block;
+		/* margin-inline-start: auto; */
 		border: none;
 		cursor: pointer;
-    margin-top: -.75ch;
-    margin-bottom: var(--size-relative-7)
+		margin-top: -0.75ch;
+		margin-bottom: var(--size-relative-7);
 	}
 	.toc {
 		width: 100%;
@@ -86,19 +88,27 @@
 	ol {
 		counter-reset: section;
 		list-style-type: none;
-		list-style-position: inside;
 		padding-left: 0;
 	}
-	ol ol {
-		padding-left: 1rem;
+
+	li {
+		display: grid;
+		grid-template-columns: max-content minmax(0, 1fr);
+		column-gap: 0.35rem;
+		align-items: start;
 	}
+
 	li::before {
 		counter-increment: section;
 		content: counters(section, '.') '. ';
 	}
+	li > ol {
+		grid-column: 2;
+	}
 
 	a {
-		display: inline-block;
+		display: block;
+		min-width: 0;
 		text-decoration: none;
 		transition: color 0.2s ease;
 	}
@@ -108,7 +118,6 @@
 	}
 
 	a.active {
-		font-weight: 600;
 		color: var(--link-color, currentColor);
 	}
 </style>

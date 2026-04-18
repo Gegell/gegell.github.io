@@ -74,7 +74,7 @@
 
 	.columns {
 		display: grid;
-		grid-template-columns: 1fr 80ch minmax(max-content, 1fr);
+		grid-template-columns: 1fr 80ch 1fr;
 		grid-template-areas:
 			'. content-head .'
 			'left content-main right';
