@@ -8,7 +8,10 @@
 	function toggleFoldout() {
 		if (open && contentEl) {
       window.scrollBy({
-        top: -contentEl.scrollHeight,
+				top: (() => {
+					const top = contentEl.getBoundingClientRect().top;
+					return top < 0 || top > window.innerHeight ? top : 0;
+				})(),
         behavior: 'smooth'
       });
     }
