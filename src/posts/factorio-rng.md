@@ -17,6 +17,7 @@ showToc: true
   import EntropyTable from './factorio-rng/entropy-table'
   import Foldout from '$lib/components/Foldout.svelte'
   import rngplot from "./factorio-rng/img/expected_bits_plot.svg?raw"
+  import PMatrix from "./factorio-rng/matrix"
   
   let sharedLfsrState = $state(0b110000);
 </script>
@@ -433,8 +434,14 @@ In total this will be $32$ equations per LFSR due to the 32 bit `uint32_t` size,
 with some equations in the lower bits being redundant mirrors of upper bits due to the construction of the LFSRs (see boost implementation).
 The full advancement matrices of the 3 LFSRs then look as follows:
 
-> [!warning] TODO
-> Add 3 side by side images here, one for each of the 3 LFSRs representing the matrices to be solved.
+<figure>
+  <div style="display:flex; gap: 1em; flex-wrap: wrap; justify-content: center;">
+    <PMatrix src="./factorio-rng/img/matrix_fwd_1_A.png" --pmatrix-width="25%" width=32 height=32 --color-active="var(--accent-1)"/>
+    <PMatrix src="./factorio-rng/img/matrix_fwd_1_B.png" --pmatrix-width="25%" width=32 height=32 --color-active="var(--accent-2)"/>
+    <PMatrix src="./factorio-rng/img/matrix_fwd_1_C.png" --pmatrix-width="25%" width=32 height=32 --color-active="var(--accent-3)"/>
+  </div>
+  <figcaption>Transition matrices $T_1, T_2, T_3$ for the 3 LFSRs.</figcaption>
+</figure>
 
 ### Combining multiple LFSRs
 We've seen that we can solve the state of a single LFSR as a linear equation of
