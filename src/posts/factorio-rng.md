@@ -18,7 +18,8 @@ showToc: true
   import Foldout from '$lib/components/Foldout.svelte'
   import rngplot from "./factorio-rng/img/expected_bits_plot.svg?raw"
   import PMatrix from "./factorio-rng/matrix"
-  
+  import Katex from '$lib/components/Katex.svelte'
+
   let sharedLfsrState = $state(0b110000);
 </script>
 
@@ -440,7 +441,7 @@ The full advancement matrices of the 3 LFSRs then look as follows:
     <PMatrix src="./factorio-rng/img/matrix_fwd_1_B.png" --pmatrix-width="25%" width=32 height=32 --color-active="var(--accent-2)"/>
     <PMatrix src="./factorio-rng/img/matrix_fwd_1_C.png" --pmatrix-width="25%" width=32 height=32 --color-active="var(--accent-3)"/>
   </div>
-  <figcaption>Transition matrices $T_1, T_2, T_3$ for the 3 LFSRs.</figcaption>
+  <figcaption>Transition matrices <Katex latex="T_1, T_2, T_3"/> for the 3 LFSRs.</figcaption>
 </figure>
 
 ### Combining multiple LFSRs
