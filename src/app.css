@@ -9,7 +9,11 @@ html {
     --font-mono: 'JetBrains Mono', monospace;
 
     /* dark */
-    --brand-dark: var(--orange-3);
+    --accent-dark-1: hsl(32, 100%, 74%);
+    --accent-dark-2: hsl(150, 100%, 74%);
+    --accent-dark-3: hsl(345, 100%, 74%);
+    --accent-dark-4: hsl(226, 100%, 74%);
+    --brand-dark: var(--accent-dark-1);
     --text-1-dark: var(--gray-3);
     --text-2-dark: var(--gray-5);
     --surface-1-dark: var(--gray-12);
@@ -20,7 +24,11 @@ html {
     --border-dark: var(--gray-9);
 
     /* light */
-    --brand-light: var(--orange-10);
+    --accent-light-1: hsl(25, 80%, 55%);
+    --accent-light-2: hsl(150, 70%, 50%);
+    --accent-light-3: hsl(345, 85%, 50%);
+    --accent-light-4: hsl(226, 80%, 60%);
+    --brand-light: var(--accent-light-1);
     --text-1-light: var(--gray-8);
     --text-2-light: var(--gray-7);
     --surface-1-light: var(--gray-0);
@@ -34,6 +42,10 @@ html {
 :root {
     color-scheme: dark;
 
+    --accent-1: var(--accent-dark-1);
+    --accent-2: var(--accent-dark-2);
+    --accent-3: var(--accent-dark-3);
+    --accent-4: var(--accent-dark-4);
     --brand: var(--brand-dark);
     --text-1: var(--text-1-dark);
     --text-2: var(--text-2-dark);
@@ -50,6 +62,10 @@ html {
     :root {
         color-scheme: light;
 
+        --accent-1: var(--accent-light-1);
+        --accent-2: var(--accent-light-2);
+        --accent-3: var(--accent-light-3);
+        --accent-4: var(--accent-light-4);
         --brand: var(--brand-light);
         --text-1: var(--text-1-light);
         --text-2: var(--text-2-light);
@@ -66,6 +82,10 @@ html {
 [color-scheme='dark'] {
     color-scheme: dark;
 
+    --accent-1: var(--accent-dark-1);
+    --accent-2: var(--accent-dark-2);
+    --accent-3: var(--accent-dark-3);
+    --accent-4: var(--accent-dark-4);
     --brand: var(--brand-dark);
     --text-1: var(--text-1-dark);
     --text-2: var(--text-2-dark);
@@ -88,6 +108,10 @@ html {
 [color-scheme='light'] {
     color-scheme: light;
 
+    --accent-1: var(--accent-light-1);
+    --accent-2: var(--accent-light-2);
+    --accent-3: var(--accent-light-3);
+    --accent-4: var(--accent-light-4);
     --brand: var(--brand-light);
     --text-1: var(--text-1-light);
     --text-2: var(--text-2-light);
