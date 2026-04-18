@@ -54,7 +54,7 @@
 	</ol>
 {/snippet}
 
-<div class="toc-sidebar {open ? 'open' : 'closed'}" bind:this={tocSidebarEl}>
+<div class="toc-sidebar {open ? 'open' : 'closed'}">
 	<button class="toc-burger" onclick={toggleToc} aria-label="Toggle Table of Contents">
 		<RiMenuFill size="28" />
 	</button>
