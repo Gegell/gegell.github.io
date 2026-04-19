@@ -2,6 +2,7 @@
 	import { anchor } from '$lib/shapeutil';
 	import { onMount } from 'svelte';
 	import { Arrow, Xor, Bit, History, Controls } from './components';
+	import { on } from 'svelte/events';
 
 	interface Props {
 		initialState?: number;
@@ -9,10 +10,19 @@
 		bits?: number;
 		reverse?: boolean;
 		value?: number;
+		hideOutput?: boolean;
 		onStateChange?: (newValue: number) => void;
 	}
 
-	let { initialState = 1, tapMask = 0b110000, bits, reverse = false, value, onStateChange }: Props = $props();
+	let {
+		initialState = 1,
+		tapMask = 0b110000,
+		bits,
+		reverse = false,
+		value,
+		hideOutput = false,
+		onStateChange
+	}: Props = $props();
 
 	function highestBit(n: number) {
 		return Math.floor(Math.log2(n));
@@ -65,6 +75,7 @@
 			historyEl?.reset();
 			historyEl?.push();
 		}
+		onStateChange?.(lfsr);
 	}
 
 	function toggleBit(i: number) {
@@ -107,12 +118,12 @@
 					<Arrow
 						from={reverse ? xorEls[i] : bitEls[i]}
 						to={reverse ? bitEls[i] : xorEls[i]}
-						color={col(lfsrBits[reverse ? i + 1 : i] ^ (reverse ? (lfsr >>> (bitCount - 1)) : 0))}
+						color={col(lfsrBits[reverse ? i + 1 : i] ^ (reverse ? lfsr >>> (bitCount - 1) : 0))}
 					/>
 					<Arrow
 						from={reverse ? bitEls[i + 1] : xorEls[i]}
 						to={reverse ? xorEls[i] : bitEls[i + 1]}
-						color={col(lfsrBits[reverse ? i + 1 : i] ^ (reverse ? 0 : (lfsr & 1)))}
+						color={col(lfsrBits[reverse ? i + 1 : i] ^ (reverse ? 0 : lfsr & 1))}
 					/>
 				{:else}
 					<Arrow
@@ -138,7 +149,9 @@
 					<path d="M {t} h 20 V 60 H {b.join('V')}" />
 				{/if}
 			{/if}
-			<path d="M {anchor(90, bitEls[bitEls.length - 1])} h 60" />
+			{#if !hideOutput}
+				<path d="M {anchor(90, bitEls[bitEls.length - 1])} h 60" />
+			{/if}
 			{#each xorEls as el, i}
 				{#if isTap(i + 1)}
 					{@const a = anchor(180, el)}
@@ -156,7 +169,7 @@
 		{/each}
 
 		<!-- History of output bits -->
-		{#if !reverse}
+		{#if !reverse && !hideOutput}
 			<History bind:this={historyEl} x={bitCount * 80} y={15} current={currentBit} />
 		{/if}
 	</svg>

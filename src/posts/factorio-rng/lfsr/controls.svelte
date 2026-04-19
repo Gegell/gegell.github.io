@@ -4,9 +4,12 @@
 	import RiPlayFill from 'svelte-remixicon/RiPlayFill.svelte';
 	import RiResetLeftFill from 'svelte-remixicon/RiResetLeftFill.svelte';
 	import RiSkipForwardFill from 'svelte-remixicon/RiSkipForwardFill.svelte';
+	import { controls } from './shared.svelte';
 
 	const speed_multipliers = [1, 2, 5];
 	const base_speed = 500;
+	const uid = $props.id();
+
 	let selected_mult: number = $state(0);
 	let last_selected: number = 0;
 	let isPlaying = $derived(selected_mult > 0);
@@ -16,7 +19,14 @@
 		clearInterval(interval);
 		if (selected_mult) {
 			last_selected = selected_mult;
+			controls.playing_id = uid;
 			interval = setInterval(tick, base_speed / selected_mult);
+		}
+	});
+
+	$effect(() => {
+		if (controls.playing_id !== uid) {
+			stop();
 		}
 	});
 
@@ -26,6 +36,7 @@
 
 	function stop() {
 		selected_mult = 0;
+		clearInterval(interval);
 	}
 
 	onMount(() => {

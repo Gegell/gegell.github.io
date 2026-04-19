@@ -425,16 +425,16 @@ In them we also nicely see the independence from the lowest $w-k$ bits, as they 
 ### Inverting an LFSR
 Moreover, careful observation of the original construction of our LFSRs highlights that this transition matrix *needs* to be invertible.
 Consider the same toy LFSR as shown above:
-<LFSR tapMask=0b110000 value={sharedLfsrState} onStateChange={(newVal) => sharedLfsrState = newVal} />
+<LFSR tapMask=0b110000 value={sharedLfsrState} onStateChange={(newVal) => sharedLfsrState = newVal} hideOutput />
 
 By modifying the way in which the data flows, a new variant can be constructed, 
 which allows us to run the same LFSR but in reverse.
 These changes originate from the following:
 1. In the "*forwards mode*" each step sets the topmost bit $x_{n-1}$ to the previous state's bottommost bit value $x_0$.
   This means the feedback arrow can now originate from the topmost bit $x_{n-1}$ instead.
-2. If a bit is just shifted from above with no XOR between, then
+1. If a bit is just shifted from above with no XOR between, then
    this step is reversible by just flipping the direction of the shift.
-3. However, if it is a combination of both the upper bit and feedback bit, 
+2. However, if it is a combination of both the upper bit and feedback bit, 
    then we reverse the step by computing $x_{i+1} = x_{n-1} \oplus {x_i}$.
    Visually this is consistent with the first step, where we reversed the feedback bit origin,
    keeping all XORs at the same locations, feeding them with the new source value.
@@ -442,7 +442,7 @@ These changes originate from the following:
 
 In simpler terms, this amounts to us just flipping almost all arrows from the previous
 LFSR diagram to obtain the following "*reverse mode*" LFSR:
-<LFSR tapMask=0b110000 value={sharedLfsrState} onStateChange={(newVal) => sharedLfsrState = newVal} reverse/>
+<LFSR tapMask=0b110000 value={sharedLfsrState} onStateChange={(newVal) => sharedLfsrState = newVal} reverse hideOutput />
 
 In mathematical terms what we have just shown is that if $T$ exists which corresponds to a single forwards step,
 then we can always construct another matrix $T^{-1}$ which perfectly reverses the previous step.
@@ -1009,15 +1009,14 @@ I have by now experimented with several -- what I call -- adapters,
 which take in these predictions, and do some funny stuff with them.
 
 Beginning with the first that I've implemented:
-> [!warning] TODO: Add yt video of first "next up" method
-
+<!-- <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/13axoDiMyGQ" title="Predicted Qualities" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe> -->
 It takes the sequence of future output qualities, and displays them next to the assembler,
 similar to the "Next Up Pieces" queue in *Tetris*.
 Each time a craft is completed, it advances the window into the future outputs by one,
 keeping the display relevant at all times.
 
 The next one was the following:
-> [!warning] TODO: Add yt video of "sort quality"
+<!-- <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/ceQ5AuEhz30" title="Sorted Qualities" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe> -->
 
 This one takes the same list, but instead assigns only a single crafter to fabricate the next item.
 The assembler which is selected depends on the next output quality.
@@ -1025,7 +1024,7 @@ In turn this leads to the 5 assemblers outputting the items in a sorted fashion,
 where each belt only ever carries a single type of quality, ordered from left to right in increasing quality.
 
 Finally, the goal that I've been interested in from the get-go:
-> [!warning] TODO: Add yt video of "automated legendary"
+<!-- <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/Gn1vKFUDIFE" title="Automated Legendary" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe> -->
 
 This method encapsulates the entire prediction and crafting loop into a closed system, 
 which can do the entire thing (predict and craft) autonomously.
