@@ -21,7 +21,7 @@
 			const dx = toCenter[0] - fromCenter[0];
 			const dy = toCenter[1] - fromCenter[1];
 
-			const angle = (Math.atan2(dx, dy) / Math.PI) * 180;
+			const angle = (Math.atan2(dx, -dy) / Math.PI) * 180;
 
 			return {
 				p1: anchor(angle, from),

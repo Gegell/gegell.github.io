@@ -1,3 +1,7 @@
 import LFSR from './lfsr.svelte';
+import SymbolicLFSR from './symbolicLfsr.svelte';
 
-export default LFSR;
+export {
+  LFSR,
+  SymbolicLFSR
+};
