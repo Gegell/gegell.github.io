@@ -1040,84 +1040,124 @@ Now to the important part, that you may be wondering about:
   Sweet! Can I use this to now do &lt;insert RNG manipulation target&gt; in <i>my</i> save-game?
 </p>
 
-The short answer: Very unlikely. Why?
-For this you can dig into the following tree which shows many of the paths in the
-game's code which might lead to a random call.
+The short answer: Very unlikely.
 
-> [!todo] TODO
-> Insert image + link to proper rng call tree here
+But why?
+It's not that I want to keep this tech for my self.
+In fact, here is the [world_download][world download link], a [blueprint_string][blueprint string]
+and the relevant cleaned up [python_code][python code] for you to play with.
+No, it rather has to do with the way that Factorio currently handles their random generators.
 
-The main takeaways from that graph are as follows:
-- There are actually not that many different types of random generators which get
-  used throughout the game.
-- Important for our considerations is the <span style="color:green">generalRandomGenerator</span>
-  which gets used by the `rollQuality` call.
+[world_download]: "placeholder"
+[blueprint_string]: "placeholder"
+[python_code]: "placeholder"
 
-Note that most of these generators have only a single instance which gets shared
-across the entire `Map` object (i.e. across all surfaces you have the same state).
-  
-This sharing of RNG state means that we would also need to predict
-the number of calls made outside of our machine between the individual cycles
-to keep a consistent state.
-Otherwise we quickly desync between the computed state and the actual game state.
+For this we can take another look into the game binary.
+After browsing a bit we encounter the `Map` object, which among other things as references to the individual *surfaces*
+(i.e. the different layers of the world, like the planets Nauvis, Fulgora, and so on).
+The RNG states however are not stored per surface, but rather globally for the entire map.
+And notice that I am speaking of *states* (i.e. plural) as there are actually multiple RNGs in game, 
+each responsible for some of the game's logic.
 
-While it's not impossible in theory to do so, it is in fact very intractable:
-One would need to reimplement all the different function calls and their behaviour
-enough such that the rng calls are predictable for all objects using the same generator.
-At that point you are basically just reimplementing major parts of Factorio
-inside of Factorio (which while interesting is not the task at hand).
+The `Map` in particular stores the following six RNGs (names from the pdb):
+- `Map.aiRandomGenerator`
+- `Map.entitiesRandomGenerator`
+- `Map.generalRandomGenerator`
+- `Map.mapRandomGenerator`
+- `Map.triggerRandomGenerator`
+- `Map.unsafeRandom`
 
-A less optimal alternative is to resample from time to time,
-and hope that there are not too many calls interwoven in the meantime.
+Try to guess what each one is responsible for :)[^rng-roles]
 
-However, to use this properly, the factory needs to be built with
-the goal of RNG manipulation in mind, to mitigate the most common sources
-of calls on the `generalRandomGenerator`. These include:
-- **Mining Drill Resource Selection** - Hence all mining drills should be able to
-  be turned off to place them in an idle state.
-- **Fulgoran Lightning Strikes** - These occur during nighttime on Fulgora
-  [about every 10 seconds per chunk](https://wiki.factorio.com/Fulgora#Lightning).
-  To circumvent those calls interferring with the manipulation, it needs to be done
-  during daytime there.
-- **Other RNG Crafts** - Not only quality, but any recipe with a random output will
-  make calls to the generator. Either implement capabilities to turn them off, or
-  some method to count the number of calls made every time a craft occurs.
+[^rng-roles]: To be honest, I still don't know what some of them do, I was only interested in the one relevant to item crafting procedures.
 
-The following are speculation and I have not tested yet in what capacity they actually
-influence the state:
-- **Explosions / Fire** - This means no biters nor asteroids should be running
-  into landmines, nor should there be rocket turrets or any active artillery.
-- **Trees dropping Leaves** - Happens when trees are deconstructed, so no active
-  agriculture towers.
-- **Particles Spawning** - Particles are spawned with a random velocity, which in
-  turn means that calls to the RNG are made.
-  For instance **trains** consuming fuel will randomly emit puffs of smoke.
-  
-Another issue would be the sheer amount of computation that is necessary to keep
-up with the game. For instance a single scrap recycling craft requires 12 calls
-to simulate. 
+> ![info]- Additional RNGs
+> 
+> There are more generators in the binary, the full list I have currently found in addition to the ones mentioned above is:
+> - `GlobalContext.randomGenerator`
+> - `LightningMeshGenerator.random`
+> - `SelectorCombinatorControlBehavior.random`
+> - `SoundRandomizer.randomGenerator`
+> - `SpacePlatform.asteroidsRandomGenerator`
+> 
+> To try and track all the RNGs and what potential call paths are which lead to a random number call,
+> I made use of binary ninja and its python scripting to extract a call tree originating from the
+> `RandomNumberGenerator::getInt` call and its derivatives. [^rng-calltree]
+> Note that this had some challenges -- and is by no means guaranteed to have captured everything --
+> such as inlining, breaking the neat call tree.
+> Tracing what RNG objects may appear where also was not trivial, as sometimes there is a dynamic choice
+> between multiple generator sources.
+> The corresponding scripts for scraping are available [binary_ninja_scripts][here].
+> Note that these require a paid version of binary ninja, as the free version does not allow custom scripts afaik.
+> It also appears the scripts no longer fully work, as the `bv.get_code_refs_for_type()` seems to now also return indirect references...
+
+[^rng-calltree]: I don't know whether I'm even allowed to show the extracted call tree?
+    Currently, it's a mess anyway, but already sufficed in hinting towards interesting functions to investigate.
+[binary_ninja_scripts]: "placeholder"
+
+Here we can already see a saving grace for RNG manipulation.
+Not all random effects are handled by the same RNG, and thus we can at least isolate some of them from the rest of the game logic.
+For instance, the RNG responsible for the biter spawning and pathing is separate from the RNG we are interested in.
+
+In particular this is the `generalRandomGenerator`, which is responsible for the item creation.
+As its name implies, it is the *general* random generator, meaning there is still some overlap with other game logic.
+Both effects completely unrelated to item creation, yet also other machines (external to my machine) which also have probabilistic outputs.
+This is exactly the issue with the non-isolated cases I talked about previously.
+
+Firstly the instances unrelated to quality rolling.
+This includes the `MapGenerator::clearEntitiesAndSetTile` function which is used when *floor tiles change*, to randomly choose from the variants.
+That can happen due to manual edits via the editor, or semi/fully automatically through the *freezing logic* changing tiles, *tile ghosts* being constructed, or a *space platform* rebuilds some flooring.
+More manual intervention which queries that generator is the *name randomization* of entities like labs and train stops,
+the player manually *mining ore* (particle spawning) or *walking* over dusty ground (creating dust particles).
+In general the *particle logic* (i.e. `ParticlePrototype::getRandomVariation` and `Smoke` constructor) also call it for some variation.
+A *selector combinator* being built also requires randomness as it needs to initialize its own RNG by a random seed.
+*Mining drills* having a single ore tile run out will randomly shuffle all remaining tiles they mine.
+Lastly the *lightning strikes* on Fulgora also use this RNG for some reason.
+
+Secondly, as all machines which require any sort of randomness share the same RNG,
+any time another (by my machine unexpected) machine uses the RNG
+-- for instance your scrap recycling line on Fulgora, uranium processing on Nauvis, or any other quality rolling --
+then the state of the RNG will change, and thus the predictions of my machine diverge from the actual game state,
+making it impossible to reliably manipulate the RNG towards any specific goal.
+Moreover, consider that in a game about automation one usually scales up to produce large volumes of items,
+leading to potentially thousands of calls occurring in just a second, outpacing my capabilities of precomputing the RNG state when compared to the actual game state.
+
+While it *might* be possible to account for all / many of the randomness sources above,
+e.g. by dynamically disabling any other production lines doing random calling using for example a logistics group,
+and waiting for daytime on Fulgora it may be possible to apply this in an actual safe game,
+it should be taken into account from the get-go, rather than being retro fitted into an existing save.
+
+If anyone wants to give it a shot, feel free to try and let me know how/if it works out for you.
 
 ## Conclusion
-All in all, the RNG used in Factorio is quite weak, and even
-completely reversible in its entirety within the game.
-Proper exploitation, however, is quite difficult.
-And once one has access to many of the required resources, it might not even be worth it anymore,
-because simply increasing production pushes you into the law-of-large-numbers territory,
-i.e. average production approaches expected production.
+To recap: we took a look at the Factorio's internal random number generator: `taus88`,
+went over its construction from linear feedback shift registers and showed how they can be modeled and predicted.
 
-Nonetheless, this project was quite a learning experience, encompassing:
-- Learning about *Galois Fields* and their combination with vector spaces.
-- Reverse engineering the game binary, figuring out the relevant control flows.
-  Even splurging on [Binary Ninja](https://binary.ninja/) which was so much more
-  useful for reverse engineering than the open source alternative 
-  [Ghidra](https://github.com/NationalSecurityAgency/ghidra), mainly due to it not crashing when trying to map the entire game binary and its subjectively easier to use API.
-- Reimplementing the RNG, the matrix solver, and a parallel matrix multiplier,
-  all in-game in a somewhat efficient manner.
+Then we built an in-game machine which allows one to
+1. read the current state,
+2. predict future states, and
+3. automatically manipulate the game state towards a favorable outcome.
 
-P.S. I began this project at the end of April 2024, and finally got over being lazy
-and published it more than a year later.
-In the meantime someone else also posted about this on the
-Factorio forums [Random number manipulation possibilities](https://forums.factorio.com/viewtopic.php?p=660560).
-As far as I can tell they stopped at a similar point as I did in one of the earlier
-stages in the project, that is predicting the state externally with a separate
-Python script from some observations.
+Lastly we reviewed why it might not be such a big deal as it might initially seem,
+as the shared RNG state across different mechanics leads to unpredictable behavior regardless.
+
+### Postscript
+Wheee, this marks the completion of a two-year project, reaching the fully autonomous gamblen't I wanted from the beginning.
+Though to be fair, most of the latter part was me procrastinating on writing this here post.
+
+Boy there were quite some tangents along the way which did not even make it into this post,
+as its long enough already, such as me recreating [cnide] with improved handling for subnets
+for documentation and simulation purposes as well as syntax highlighting in vscode,
+or the first implementation attempt where I did *all* the matrix math in game,
+including the creation of the matrix and Gaussian elimination of said matrix.
+
+[cnide]: https://github.com/charredUtensil/cnide
+
+Thanks go out towards @earthcomputer and co. who unknowingly inspired this project,
+as their [messdetector]["Mess Detector"] did something similar but in Minecraft instead.
+Additionally, @kovaxis in the Factorio forums on [rng-manip-forum][Random number manipulation possibilities],
+stopping at a similar point as I did initially, where the state is computed with an external python script from some in-game observations.
+Lastly, friends and family who endured me rambling about unhinged math for a long time, encouraging me to finish the blog -- thanks :)
+
+[messdetector]: https://www.youtube.com/watch?v=FPmQ0rnJjNc
+[rng-manip-forum]: https://forums.factorio.com/viewtopic.php?p=660560
