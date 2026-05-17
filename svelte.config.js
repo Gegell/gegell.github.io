@@ -4,6 +4,7 @@ import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import { mdsvex, escapeSvelte } from 'mdsvex';
 import remarkMath from 'remark-math';
 import remarkFootnotes from 'remark-footnotes';
+import remarkFootnoteNumbering from './src/lib/remark-footnote-numbering.js';
 import rehypeKatexSvelte from 'rehype-katex-svelte';
 import rehypeCallouts from 'rehype-callouts';
 import { createHighlighter } from 'shiki'
@@ -27,7 +28,8 @@ const mdsvexOptions = {
 	remarkPlugins: [
 		remarkMath,
 		relativeImages,
-		remarkFootnotes
+		remarkFootnotes,
+		remarkFootnoteNumbering
 	],
 	rehypePlugins: [
 		rehypeCallouts,
