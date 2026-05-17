@@ -145,7 +145,7 @@ html {
     transition-timing-function: var(--ease-in-out-1);
 }
 
-img {
+img, video {
     border-radius: var(--radius-3);
 }
 
@@ -194,6 +194,10 @@ button:hover {
         margin-inline: auto;
     }
 
+    figure > figcaption {
+        text-align: center;
+    }
+
     p,
     li,
     blockquote {
@@ -204,6 +208,10 @@ button:hover {
         margin-block: var(--size-fluid-2);
         background-color: var(--surface-4);
     }
+}
+
+.footnote-backref {
+    margin-left: var(--size-1);
 }
 
 .shiki {

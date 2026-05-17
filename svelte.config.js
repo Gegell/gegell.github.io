@@ -21,6 +21,9 @@ const highlighter = await createHighlighter({
 /** @type {import('mdsvex').MdsvexOptions} */
 const mdsvexOptions = {
 	extension: '.md',
+	smartypants: {
+		dashes: 'oldschool'
+	},
 	remarkPlugins: [
 		remarkMath,
 		relativeImages,
