@@ -24,7 +24,7 @@ showToc: true
 </script>
 
 
-<video autoplay loop muted playsinline style="width: 100%; height: auto; border-radius: var(--radius-3);" poster="./factorio-rng/img/factorio-breaking-rng-thumbnail.jpg">
+<video autoplay loop muted playsinline style="width: 100%; height: auto;" poster="./factorio-rng/img/factorio-breaking-rng-thumbnail.jpg">
   <source src="./factorio-rng/img/legendary-autocrafter.mp4" type="video/mp4">
 </video>
 
@@ -47,7 +47,7 @@ However, thinking about it, one might ponder:
 
 The short answer is: It isn't random.
 
-Instead &ndash; as is common in computing &ndash; the simulation makes use of a *pseudo-random number generator* (PRNG).
+Instead -- as is common in computing -- the simulation makes use of a *pseudo-random number generator* (PRNG).
 A PRNG is a deterministic algorithm which produces a sequence of numbers which for all intents and purposes appears to be random.
 In particular this means properties like it following a well defined distribution of outputs, which contains no discernable patterns.
 Normally in computer science one can get away with treating the PRNG as just a black box function which can yield random numbers, without concerning oneself with how it actually works.
@@ -76,7 +76,7 @@ In that thread, we also find the following answer by @Cube, a former developer a
 >[!cite] Cube - Tue Sep 30, 2014 12:27 pm - [forums.factorio.com - topic 5995](https://forums.factorio.com/viewtopic.php?t=5995)
 >\[...\] We chose taus88 mainly because it is the fastest from boost's generators.
 > I was thinking of removing one of the three LFSRs (that should make it about
-> 40% (?) faster), but there is no point, since the random numbers are not a
+> 40% (?) faster), but there is no point, since the ran[d]om numbers are not a
 > bottleneck for us.
 
 This already gives us a lead on where to look next: the `Boost.Random` library.
@@ -146,14 +146,12 @@ Yet the fact that we store 3 seeds for our RNG state is a first strong indicator
 Likewise, the states are updated independently of one another, with the final result being the XOR of all three states.
 
 To rid myself of all remaining doubt about whether the two implementations are equivalent, I rewrote both
-variants in Python so they can be run using [`sympy`][sympy], a Python library for symbolic manipulation.
+variants in Python so they can be run using [sympy](https://www.sympy.org/), a Python library for symbolic manipulation.
 Advancing both variants by a single step confirms that all bits of the corresponding registers update
-in the exact same fashion. I used `sympy` here because doing these equivalence checks by
+in the exact same fashion. I used sympy here because doing these equivalence checks by
 hand ($3 \cdot 32 = 96$) would have been quite tedious.
 > [!warning] TODO
 > add link to my code which proves equivalence
-
-[sympy]: https://www.sympy.org/
 
 Ok, with all that established, we are certain that the RNG used in Factorio is indeed the `taus88` generator,
 which itself is a combination of 3 LFSRs.
@@ -253,7 +251,7 @@ We still start at an arbitrary point in time $t=0$, at which we label each indiv
 with an additional symbolic variable $x_i$.
 Then we track how the bits evolve over time as we apply the LFSR transition rules.
 Each symbol is colored either on or off depending on the state at which the LFSR was started.
-As before, you can toggle individual bits by clicking on them &ndash; though only while the bit labels are in the initial state.
+As before, you can toggle individual bits by clicking on them -- though only while the bit labels are in the initial state.
 
 <SymbolicLFSR tapMask=0b1100 />
 
@@ -408,6 +406,9 @@ In them we also nicely see the independence from the lowest $w-k$ bits, as they 
   </div>
   <figcaption>Transition matrices <Katex latex="T_1, T_2, T_3"/> for the 3 LFSRs.</figcaption>
 </figure>
+
+Note that unlike the previously discussed LFSRs these change more than just the feedback bits directly.
+This is what the paramter $s$ does in the `linear_feedback_shift_engine` constructor, which essentially is the number of steps each individual LFSR is advanced in a single step.
 
 ### Inverting an LFSR
 Going forward quickly is already nice.
@@ -642,7 +643,7 @@ questions about the output, depending on the chosen method. Some examples are:
   and if yes by how many at once.
 
 I'm going to focus on the first of the two methods, just observing the amount of
-produced items &ndash; as this was the only source of information I had available when
+produced items -- as this was the only source of information I had available when
 I started this project. The thing to realize is that answering any of these
 questions yields us only information about some of the *top bits* of the RNG
 roll result.
@@ -752,7 +753,7 @@ Now the question is how do we get the matrices, and where do we get the vectors 
 The current state will be computed from *observations* made when recycling [repair packs](https://wiki.factorio.com/Repair_pack). 
 Each recycling operation will yield exactly 2 bits of information, 1 for each resulting item.
 This in turn means that we require $88/2=44$ recycling operations to have enough information to fully reconstruct the state.
-As each result provides us with exactly one bit of information &ndash; the topmost bit of the RNG call &ndash; the 88 observations can be written as:
+As each result provides us with exactly one bit of information -- the topmost bit of the RNG call -- the 88 observations can be written as:
 $$
 o^{(t)}, o^{(t+1)}, \dots, o^{(t+87)} \in \text{GF}(2)
 $$
@@ -908,8 +909,8 @@ Hence the skip-ahead equation can be implemented in parallel for all $k$ steps a
    I opted to predict 1000 forward steps in parallel.
 
 <figure>
-  <img alt="The same matrix column for multiple T^k transition matrices." src="./factorio-rng/img/ingame_multi_step_constants.png">
-  <figcaption>Matrix columns for multiple <Katex latex="T^k" /> transition matrices.</figcaption>
+  <img alt="The same matrix column from different T^k transition matrices." src="./factorio-rng/img/ingame_multi_step_constants.png">
+  <figcaption>The same column from different <Katex latex="T^k" /> transition matrices.</figcaption>
 </figure>
 
 3. Now we have 32 nets each full with $k$ 32 bit wide values which need to be XORed together.
@@ -1010,6 +1011,13 @@ which take in these predictions, and do some funny stuff with them.
 
 Beginning with the first that I've implemented:
 <!-- <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/13axoDiMyGQ" title="Predicted Qualities" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe> -->
+<figure>
+  <video loops muted playsinline controls disablepictureinpicture>
+    <source src="./factorio-rng/img/adapter-1-preview.mp4" type="video/mp4">
+  </video>
+  <figcaption>Predicts quality levels before the craft.</figcaption>
+</figure>
+
 It takes the sequence of future output qualities, and displays them next to the assembler,
 similar to the "Next Up Pieces" queue in *Tetris*.
 Each time a craft is completed, it advances the window into the future outputs by one,
@@ -1017,6 +1025,12 @@ keeping the display relevant at all times.
 
 The next one was the following:
 <!-- <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/ceQ5AuEhz30" title="Sorted Qualities" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe> -->
+<figure>
+  <video loops muted playsinline controls disablepictureinpicture>
+    <source src="./factorio-rng/img/adapter-2-presort.mp4" type="video/mp4">
+  </video>
+  <figcaption>Selects assembler by next up quality.</figcaption>
+</figure>
 
 This one takes the same list, but instead assigns only a single crafter to fabricate the next item.
 The assembler which is selected depends on the next output quality.
@@ -1025,6 +1039,12 @@ where each belt only ever carries a single type of quality, ordered from left to
 
 Finally, the goal that I've been interested in from the get-go:
 <!-- <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/Gn1vKFUDIFE" title="Automated Legendary" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe> -->
+<figure>
+  <video loops muted playsinline disablepictureinpicture controls>
+    <source src="./factorio-rng/img/adapter-3-auto-legendary.mp4" type="video/mp4">
+  </video>
+  <figcaption>Full automation of legendary items.</figcaption>
+</figure>
 
 This method encapsulates the entire prediction and crafting loop into a closed system, 
 which can do the entire thing (predict and craft) autonomously.
@@ -1044,13 +1064,9 @@ The short answer: Very unlikely.
 
 But why?
 It's not that I want to keep this tech for my self.
-In fact, here is the [world_download][world download link], a [blueprint_string][blueprint string]
-and the relevant cleaned up [python_code][python code] for you to play with.
+In fact, here is the [world download link](placeholder), a [blueprint string](placeholder)
+and the relevant cleaned up [python code](placeholder) for you to play with.
 No, it rather has to do with the way that Factorio currently handles their random generators.
-
-[world_download]: "placeholder"
-[blueprint_string]: "placeholder"
-[python_code]: "placeholder"
 
 For this we can take another look into the game binary.
 After browsing a bit we encounter the `Map` object, which among other things as references to the individual *surfaces*
@@ -1059,7 +1075,8 @@ The RNG states however are not stored per surface, but rather globally for the e
 And notice that I am speaking of *states* (i.e. plural) as there are actually multiple RNGs in game, 
 each responsible for some of the game's logic.
 
-The `Map` in particular stores the following six RNGs (names from the pdb):
+The `Map` in particular stores the following six RNGs (names from the pdb).
+Try to guess what each one is responsible for:
 - `Map.aiRandomGenerator`
 - `Map.entitiesRandomGenerator`
 - `Map.generalRandomGenerator`
@@ -1067,11 +1084,10 @@ The `Map` in particular stores the following six RNGs (names from the pdb):
 - `Map.triggerRandomGenerator`
 - `Map.unsafeRandom`
 
-Try to guess what each one is responsible for :)[^rng-roles]
 
-[^rng-roles]: To be honest, I still don't know what some of them do, I was only interested in the one relevant to item crafting procedures.
+To be honest, I still don't know what some of them do, I was only interested in the one relevant to item crafting procedures.
 
-> ![info]- Additional RNGs
+> [!note]- Additional RNGs
 > 
 > There are more generators in the binary, the full list I have currently found in addition to the ones mentioned above is:
 > - `GlobalContext.randomGenerator`
@@ -1082,18 +1098,10 @@ Try to guess what each one is responsible for :)[^rng-roles]
 > 
 > To try and track all the RNGs and what potential call paths are which lead to a random number call,
 > I made use of binary ninja and its python scripting to extract a call tree originating from the
-> `RandomNumberGenerator::getInt` call and its derivatives. [^rng-calltree]
-> Note that this had some challenges -- and is by no means guaranteed to have captured everything --
-> such as inlining, breaking the neat call tree.
-> Tracing what RNG objects may appear where also was not trivial, as sometimes there is a dynamic choice
-> between multiple generator sources.
-> The corresponding scripts for scraping are available [binary_ninja_scripts][here].
-> Note that these require a paid version of binary ninja, as the free version does not allow custom scripts afaik.
-> It also appears the scripts no longer fully work, as the `bv.get_code_refs_for_type()` seems to now also return indirect references...
+> `RandomNumberGenerator::getInt` call and its derivatives.[^call_tree]
+> The corresponding scripts for scraping are available [here](placeholder).
 
-[^rng-calltree]: I don't know whether I'm even allowed to show the extracted call tree?
-    Currently, it's a mess anyway, but already sufficed in hinting towards interesting functions to investigate.
-[binary_ninja_scripts]: "placeholder"
+[^call-tree]: If I can I would like to add the call tree here, though its (i) quite cluttered in its current form and (ii) unclear whether I am allowed to (gotta ask @Wube about this).
 
 Here we can already see a saving grace for RNG manipulation.
 Not all random effects are handled by the same RNG, and thus we can at least isolate some of them from the rest of the game logic.
@@ -1101,48 +1109,49 @@ For instance, the RNG responsible for the biter spawning and pathing is separate
 
 In particular this is the `generalRandomGenerator`, which is responsible for the item creation.
 As its name implies, it is the *general* random generator, meaning there is still some overlap with other game logic.
-Both effects completely unrelated to item creation, yet also other machines (external to my machine) which also have probabilistic outputs.
+Either completely unrelated to item creation, or through other recipes which also have probabilistic outputs.
 This is exactly the issue with the non-isolated cases I talked about previously.
 
-Firstly the instances unrelated to quality rolling.
-This includes the `MapGenerator::clearEntitiesAndSetTile` function which is used when *floor tiles change*, to randomly choose from the variants.
-That can happen due to manual edits via the editor, or semi/fully automatically through the *freezing logic* changing tiles, *tile ghosts* being constructed, or a *space platform* rebuilds some flooring.
-More manual intervention which queries that generator is the *name randomization* of entities like labs and train stops,
-the player manually *mining ore* (particle spawning) or *walking* over dusty ground (creating dust particles).
-In general the *particle logic* (i.e. `ParticlePrototype::getRandomVariation` and `Smoke` constructor) also call it for some variation.
-A *selector combinator* being built also requires randomness as it needs to initialize its own RNG by a random seed.
-*Mining drills* having a single ore tile run out will randomly shuffle all remaining tiles they mine.
-Lastly the *lightning strikes* on Fulgora also use this RNG for some reason.
+First a non-exhaustive list, of instances unrelated to quality rolling:
+- Floor **tiles changing** via the `MapGenerator::clearEntitiesAndSetTile` function, which randomly chooses from variants. This can happen due to manual edits via the **editor**, through the **freezing logic** changing tiles, **tile ghosts** being constructed, or a **space platform** building some flooring.
+- **Name randomization** of entities like labs and train stops,
+- Player manually **mining ore** (particle spawning) or **walking** over dusty ground (creating dust particles),
+- **Particles** in general i.e. `ParticlePrototype::getRandomVariation` and `Smoke` constructor,
+- **Selector combinators** initialize their own RNG with a random seed,
+- **Mining drills** with a single ore tile running out randomly shuffle all remaining tiles they mine,
+- **Lightning strikes** on Fulgora
 
-Secondly, as all machines which require any sort of randomness share the same RNG,
-any time another (by my machine unexpected) machine uses the RNG
+Secondly, all machines requiring any sort of randomness share the same RNG.
+Any time another (by my machine unexpected) recipe uses the RNG
 -- for instance your scrap recycling line on Fulgora, uranium processing on Nauvis, or any other quality rolling --
-then the state of the RNG will change, and thus the predictions of my machine diverge from the actual game state,
+then the state of the RNG will change, causing the predictions of my machine to diverge from the actual game state,
 making it impossible to reliably manipulate the RNG towards any specific goal.
 Moreover, consider that in a game about automation one usually scales up to produce large volumes of items,
-leading to potentially thousands of calls occurring in just a second, outpacing my capabilities of precomputing the RNG state when compared to the actual game state.
+leading to potentially thousands of calls occurring in just a second, outpacing my capabilities of precomputing the RNG fast enough.
 
 While it *might* be possible to account for all / many of the randomness sources above,
 e.g. by dynamically disabling any other production lines doing random calling using for example a logistics group,
 and waiting for daytime on Fulgora it may be possible to apply this in an actual safe game,
 it should be taken into account from the get-go, rather than being retro fitted into an existing save.
 
-If anyone wants to give it a shot, feel free to try and let me know how/if it works out for you.
+> [!check] If anyone wants to give it a shot, feel free to try and let me know how/if it works out.
 
 ## Conclusion
 To recap: we took a look at the Factorio's internal random number generator: `taus88`,
 went over its construction from linear feedback shift registers and showed how they can be modeled and predicted.
 
-Then we built an in-game machine which allows one to
-1. read the current state,
-2. predict future states, and
-3. automatically manipulate the game state towards a favorable outcome.
+Then we built an in-game machine which allows one to *read* the current state, *predict* future states, and automatically *manipulate* the game state towards a favorable outcome.
 
-Lastly we reviewed why it might not be such a big deal as it might initially seem,
-as the shared RNG state across different mechanics leads to unpredictable behavior regardless.
+Lastly we reviewed why it might not be such a big deal as it might initially seem,[^not-a-big-deal]
+as the shared RNG state across different mechanics makes it intractable to actually use this in a real game.
 
-### Postscript
-Wheee, this marks the completion of a two-year project, reaching the fully autonomous gamblen't I wanted from the beginning.
+[^not-a-big-deal]: Please, please, please @Wube do not change the RNG it really is not an issue.
+
+<br/>
+
+--- 
+
+This marks the completion of a two-year project, reaching the fully autonomous gamblen't I wanted from the beginning.
 Though to be fair, most of the latter part was me procrastinating on writing this here post.
 
 Boy there were quite some tangents along the way which did not even make it into this post,
@@ -1154,10 +1163,7 @@ including the creation of the matrix and Gaussian elimination of said matrix.
 [cnide]: https://github.com/charredUtensil/cnide
 
 Thanks go out towards @earthcomputer and co. who unknowingly inspired this project,
-as their [messdetector]["Mess Detector"] did something similar but in Minecraft instead.
-Additionally, @kovaxis in the Factorio forums on [rng-manip-forum][Random number manipulation possibilities],
-stopping at a similar point as I did initially, where the state is computed with an external python script from some in-game observations.
-Lastly, friends and family who endured me rambling about unhinged math for a long time, encouraging me to finish the blog -- thanks :)
+as their ["Mess Detector"](https://www.youtube.com/watch?v=FPmQ0rnJjNc) did something similar but in Minecraft instead.
+Additionally, @kovaxis in the [Factorio forums](https://forums.factorio.com/viewtopic.php?p=660560), reaching and stopping at a similar point as I did initially, where the state is computed with an external python script from some in-game observations.
 
-[messdetector]: https://www.youtube.com/watch?v=FPmQ0rnJjNc
-[rng-manip-forum]: https://forums.factorio.com/viewtopic.php?p=660560
+Lastly, friends and family who endured me rambling about unhinged math for a long time, encouraging me to finish the blog -- thanks :)
