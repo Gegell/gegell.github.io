@@ -10,6 +10,10 @@
 	<title>{data.title}</title>
 	<meta property="og:type" content="article" />
 	<meta property="og:title" content={data.title} />
+	<meta property="og:description" content={data.description} />
+	{#if data.image}
+		<meta property="og:image" content={data.image} />
+	{/if}
 </svelte:head>
 
 <article class="columns">

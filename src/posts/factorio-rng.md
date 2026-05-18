@@ -1,6 +1,7 @@
 ---
 title: Reversing Factorio's RNG
 description: Understanding and reversing Factorio's PRNG
+image: ./factorio-rng/img/factorio-breaking-rng-thumbnail.jpg
 date: '2024-04-20'
 categories: 
     - 'Factorio'

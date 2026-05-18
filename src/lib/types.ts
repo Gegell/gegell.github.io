@@ -6,6 +6,7 @@ export type PostSummary = {
 	date: string;
 	categories: string[];
 	description: string;
+	image?: string;
 };
 
 export type Post = PostSummary & {

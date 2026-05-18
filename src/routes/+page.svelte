@@ -14,9 +14,16 @@
 	<ul class="posts">
 		{#each data.posts as post}
 			<li class="post">
-				<a href="{base}/posts/{post.slug}" class="title">{post.title}</a>
-				<p class="date">{dateFormat(post.date)}</p>
-				<p class="description">{post.description}</p>
+				{#if post.image}
+					<div class="thumbnail">
+						<img src={post.image} alt={post.title} />
+					</div>
+				{/if}
+				<div class="description">
+					<a href="{base}/posts/{post.slug}" class="title">{post.title}</a>
+					<p class="date">{dateFormat(post.date)}</p>
+					<p class="description">{post.description}</p>
+				</div>
 			</li>
 		{/each}
 	</ul>
@@ -35,6 +42,10 @@
 
 	.post {
 		margin-block: var(--size-3);
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: var(--size-3);
+		max-inline-size: unset;
 	}
 
 	.post:not(:first-child) {
