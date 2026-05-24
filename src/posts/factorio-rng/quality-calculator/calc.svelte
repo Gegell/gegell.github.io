@@ -118,7 +118,7 @@
 		margin-inline: auto;
 		display: grid;
 		grid-template-columns: max-content 1fr;
-		align-items: center;
+		align-items: baseline;
 		gap: var(--size-3, 1rem);
 		padding: var(--size-3, 1rem);
 		background-color: var(--surface-2);
@@ -147,13 +147,14 @@
 		padding: 0;
 		background: none;
 		border-radius: 0;
+		flex-wrap: wrap;
 	}
 
 	.quality-btn-group button {
 		border: 2px solid transparent;
 		background: var(--surface-1, #222);
 		border-radius: 0.5rem;
-		padding: 0.5rem 0.75rem;
+		padding: 0.5rem 0.5rem;
 		cursor: pointer;
 		transition:
 			border 0.15s,
