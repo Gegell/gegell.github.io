@@ -1,6 +1,6 @@
 ---
 title: Reversing Factorio's RNG
-description: Understanding and reversing Factorio's PRNG
+description: This post details how Factorio's random number generation works, how it can be reversed and how I used that knowledge to predict and manipulate the RNG with pure in‑game mechanics. 
 image: ./factorio-rng/img/factorio-breaking-rng-thumbnail.jpg
 date: '2024-04-20'
 categories: 
@@ -36,11 +36,15 @@ With the release of the Space-Age DLC in Factorio several new mechanics were int
 One major mechanic was the new concept of different items and building *qualities*.
 By default, items are common quality, but if add *quality modules* to the crafting machine we gain a small chance to obtain items of higher quality.
 
-What does that mean? The items / buildings get improved stats, such as faster crafting speeds, improved module buffing stats, increased power pole range and faster inserters.
-Thats pretty neat, and as such we are interested in getting the highest possible quality on our items and buildings.
-The original intention of the developers was to make use of the law of large numbers, wherein the more items you craft, the higher the chance that you get at least some items at higher quality levels.
+What does that entail? In short: Items and buildings gain improved stats, such as faster crafting speeds, modules providing stronger buffs, power poles having an increased range and inserters swinging faster.
+Thats pretty neat -- hence we are interested in obtaining the highest possible quality on our items and buildings.
+To source a large number of such items the devs essentially said that this randomness boils down to "basically statistics",[^fff-375-quote]
+i.e. if the volume high quality items one obtains is sufficiently large, then the observed distribution of qualities will be close to the expected distribution.
 
-However, thinking about it, one might ponder:
+[^fff-375-quote]: See [Factorio Friday Facts #375](https://factorio.com/blog/post/fff-375)
+
+But is it the *only* way to scale?
+Thinking about it, one might ponder:
 
 <p style="text-align: center;">
  <i>How</i> is it possible for a <i>deterministic</i> game like Factorio to have a <i>random</i> mechanic?
@@ -72,9 +76,9 @@ As the Factorio community is quite large and filled with many technically inclin
 *surely* someone must have asked this question before.
 After digging around a bit I found a post on the Factorio forums asking basically
 the same thing I wanted to know, though 11 years have passed since then.
-In that thread, we also find the following answer by @Cube, a former developer at Wube. They wrote:
+In that thread, we also find the following answer by Cube, a former developer at Wube. They wrote:
 
->[!cite] Cube - Tue Sep 30, 2014 12:27 pm - [forums.factorio.com - topic 5995](https://forums.factorio.com/viewtopic.php?t=5995)
+>[!cite] Cube -- Tue Sep 30, 2014 -- [forums.factorio.com: Topic 5995](https://forums.factorio.com/viewtopic.php?t=5995)
 >\[...\] We chose taus88 mainly because it is the fastest from boost's generators.
 > I was thinking of removing one of the three LFSRs (that should make it about
 > 40% (?) faster), but there is no point, since the ran[d]om numbers are not a
@@ -157,7 +161,7 @@ hand ($3 \cdot 32 = 96$) would have been quite tedious.
 Ok, with all that established, we are certain that the RNG used in Factorio is indeed the `taus88` generator,
 which itself is a combination of 3 LFSRs.
 This is a very interesting result, as LFSRs are known to be quite weak PRNGs,
-online one even finds the statement that they are *trivially breakable*[^trivially-breakable].
+online one even finds the statement that they are *trivially breakable*.[^trivially-breakable]
 
 [^trivially-breakable]: *Trivially breakable* for security researchers seems to mean that *they* know how to break them hence its easy, even if still takes some setup to understand.
 
@@ -870,7 +874,7 @@ As such the vectors are represented by 96 different signals.
 </figure>
 
 Finally we require the XOR of all these vectors to obtain the final state.
-This can be achieved via implicit addition [^implicit-addition].
+This can be achieved via implicit addition. [^implicit-addition]
 Summing the values of a single signal and extracting only the last bit of this sum is equivalent to taking the XOR over all of them.
 As such, by wiring all decider outputs together, a single *arithmetic combinator* can perform the bit extraction by ANDing the pointwise sums with 1.
 
@@ -1099,10 +1103,10 @@ To be honest, I still don't know what some of them do, I was only interested in 
 > 
 > To try and track all the RNGs and what potential call paths are which lead to a random number call,
 > I made use of binary ninja and its python scripting to extract a call tree originating from the
-> `RandomNumberGenerator::getInt` call and its derivatives.[^call_tree]
+> `RandomNumberGenerator::getInt` call and its derivatives.[^call-tree]
 > The corresponding scripts for scraping are available [here](placeholder).
 
-[^call-tree]: If I can I would like to add the call tree here, though its (i) quite cluttered in its current form and (ii) unclear whether I am allowed to (gotta ask @Wube about this).
+[^call-tree]: If I can I would like to add the call tree here, though its (i) quite cluttered in its current form and (ii) unclear whether I am allowed to (should ask @Wube).
 
 Here we can already see a saving grace for RNG manipulation.
 Not all random effects are handled by the same RNG, and thus we can at least isolate some of them from the rest of the game logic.
@@ -1120,7 +1124,8 @@ First a non-exhaustive list, of instances unrelated to quality rolling:
 - **Particles** in general i.e. `ParticlePrototype::getRandomVariation` and `Smoke` constructor,
 - **Selector combinators** initialize their own RNG with a random seed,
 - **Mining drills** with a single ore tile running out randomly shuffle all remaining tiles they mine,
-- **Lightning strikes** on Fulgora
+- **Lightning strikes** on Fulgora,
+- **Spidertron** leg placements when walking
 
 Secondly, all machines requiring any sort of randomness share the same RNG.
 Any time another (by my machine unexpected) recipe uses the RNG
@@ -1167,4 +1172,4 @@ Thanks go out towards @earthcomputer and co. who unknowingly inspired this proje
 as their ["Mess Detector"](https://www.youtube.com/watch?v=FPmQ0rnJjNc) did something similar but in Minecraft instead.
 Additionally, @kovaxis in the [Factorio forums](https://forums.factorio.com/viewtopic.php?p=660560), reaching and stopping at a similar point as I did initially, where the state is computed with an external python script from some in-game observations.
 
-Lastly, friends and family who endured me rambling about unhinged math for a long time, encouraging me to finish the blog -- thanks :)
+Lastly, everyone who motivated me to finish this writeup after hearing me rambling about rngs -- thanks :)
