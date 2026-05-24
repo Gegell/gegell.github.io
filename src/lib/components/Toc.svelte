@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Toc } from '@stefanprobst/rehype-extract-toc';
 	import RiMenuFill from 'svelte-remixicon/RiMenuFill.svelte';
-	import { fly, slide } from 'svelte/transition';
+	import { fly } from 'svelte/transition';
 	import { onMount } from 'svelte';
 
 	let { headings = [] }: { headings?: Toc } = $props();
@@ -55,12 +55,18 @@
 {/snippet}
 
 <div class="toc-sidebar {open ? 'open' : 'closed'}">
-	<button class="toc-burger" onclick={toggleToc} aria-label="Toggle Table of Contents">
+	<button
+		class="toc-burger"
+		onclick={toggleToc}
+		aria-label="Toggle Table of Contents"
+		aria-expanded={open}
+		aria-controls="toc-nav"
+	>
 		<RiMenuFill size="28" />
 	</button>
 	{#if open}
 		<!-- TODO: remove the snapping behaviour when hiding/showing the ToC -->
-		<nav class="toc" transition:fly={{ x: 50, duration: 400 }}>
+		<nav id="toc-nav" class="toc" transition:fly={{ x: 50, duration: 400 }}>
 			{@render tocList(headings)}
 		</nav>
 	{/if}
@@ -71,11 +77,11 @@
 		position: sticky;
 		top: var(--size-10);
 		overflow: visible;
+		align-self: start;
 	}
 	.toc-burger {
 		background: var(--surface-4);
 		display: block;
-		/* margin-inline-start: auto; */
 		border: none;
 		cursor: pointer;
 		margin-top: -0.75ch;
@@ -119,5 +125,35 @@
 
 	a.active {
 		color: var(--link-color, currentColor);
+	}
+
+	/* TODO: This is a jank way to switch between the different layouts and was only tested with my one singular post.
+	   Might need to be adjusted later. */
+	@media (max-width: 155ch) {
+		.toc-sidebar {
+			position: fixed;
+			inset-block-start: var(--size-10);
+			inset-inline-end: var(--size-5);
+			z-index: 20;
+			width: min(fit-content, 100%);
+		}
+
+		.toc-burger {
+			margin-inline-start: auto;
+			margin-bottom: 0;
+			box-shadow: var(--shadow-2);
+		}
+
+		.toc {
+			margin-top: var(--size-3);
+			max-block-size: calc(100dvh - var(--size-12));
+			overflow: auto;
+			padding: var(--size-4);
+			background: var(--surface-2);
+			border: 1px solid var(--border);
+			border-radius: var(--radius-3);
+			box-shadow: var(--shadow-5);
+			backdrop-filter: blur(12px);
+		}
 	}
 </style>
