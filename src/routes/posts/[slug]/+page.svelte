@@ -63,7 +63,7 @@
 	.tags {
 		display: flex;
 		gap: var(--size-2);
-		margin-block: var(--size-3);
+		padding-block: var(--size-3);
 		flex-wrap: wrap;
 		align-items: flex-start;
 	}
@@ -95,5 +95,17 @@
 	}
 	.toc {
 		grid-area: right;
+	}
+
+	/* TODO: Figure out why for really low resolution the width of the display is exceeded. */
+	@media (max-width: 155ch) {
+		.columns {
+			display: block;
+			max-inline-size: 80ch;
+		}
+
+		.head {
+			margin-bottom: var(--size-7);
+		}
 	}
 </style>
