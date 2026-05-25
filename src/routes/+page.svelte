@@ -62,20 +62,21 @@
 		flex-direction: row;
 		flex-wrap: wrap;
 		gap: var(--size-5);
-		justify-content: center;
+		justify-content: flex-start;
+		align-items: flex-start;
 		text-decoration: none;
 	}
 
 	.post .thumbnail {
-		width: 40ch;
-		flex-shrink: 0;
+		flex: 1 1 40ch;
+		max-inline-size: 100%;
+		min-inline-size: 20ch;
+		max-width: 40ch;
 	}
 
 	.details {
-		flex-shrink: 1;
-		flex-basis: 0;
-		flex-grow: 1;
-		min-width: max(40%, min-content);
+		flex: 1 1 0;
+		min-inline-size: 28ch;
 	}
 
 	.thumbnail > img {
@@ -88,8 +89,7 @@
 		font-size: var(--size-6);
 		font-weight: bold;
 		color: var(--brand);
-		min-width: max-content;
-		display: inline-block;
+		max-inline-size: 100%;
 	}
 
 	.date {
