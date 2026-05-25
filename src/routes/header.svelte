@@ -82,10 +82,13 @@
 		position: sticky;
 		top: 0;
 		z-index: 100;
-		background: var(--background);
 		transition: transform 0.18s ease;
 		padding-block: var(--size-3);
 		padding-inline: var(--size-7);
+	}
+
+	header.narrow {
+		background: var(--background);
 	}
 	
 	header.narrow.hide {
@@ -98,9 +101,12 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		border-bottom: 1px solid var(--border);
 	}
 
+	header.narrow nav {
+		border-bottom: 1px solid var(--border);
+	}
+	
 	.header-left,
 	.header-right {
 		/* flex: 1 1 0; */
