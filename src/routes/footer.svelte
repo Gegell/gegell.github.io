@@ -10,7 +10,7 @@
 </script>
 
 <footer>
-  <p>{config.title} &copy; {startYear}{year > startYear ? ` - ${year}` : ''}</p>
+  <div>{config.title} &copy; {startYear}{year > startYear ? ` - ${year}` : ''}</div>
 </footer>
 
 <style>
@@ -18,7 +18,7 @@
     padding-inline: var(--size-7);
   }
   
-  p {
+  div {
     border-top: 1px solid var(--border);
     padding-block: var(--size-4);
     color: var(--text-2);
