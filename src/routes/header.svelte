@@ -1,6 +1,6 @@
 <script lang="ts">
 	import * as config from '$lib/config';
-	import { mobileHeader, mobileToc } from '$lib/mobile.svelte';
+	import { mobile } from '$lib/mobile.svelte';
 	import { toc } from '$lib/toc.svelte';
 	import { base } from '$app/paths';
 	import ThemeToggle from './themeToggle.svelte';
@@ -13,7 +13,7 @@
 		let previousScrollY = window.scrollY;
 
 		function updateHeaderVisibility() {
-			if (!mobileHeader.matches) {
+			if (!mobile.matches) {
 				hideHeader = false;
 				previousScrollY = window.scrollY;
 				return;
@@ -45,13 +45,13 @@
 	});
 
 	$effect(() => {
-		if (!mobileHeader.matches) {
+		if (!mobile.matches) {
 			hideHeader = false;
 		}
 	});
 </script>
 
-<header class:hide={hideHeader} class:narrow={mobileHeader.matches}>
+<header class:hide={hideHeader} class:narrow={mobile.matches}>
 	<nav>
 		<div class="header-left">
 			<a href="{base}/" class="title">
@@ -60,8 +60,8 @@
 		</div>
 
 		<div class="header-center">
-			{#if toc.available && mobileToc.matches}
-				<TocToggleButton />
+			{#if toc.available && mobile.matches}
+					<TocToggleButton />
 			{/if}
 		</div>
 

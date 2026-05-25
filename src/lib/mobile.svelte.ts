@@ -1,8 +1,7 @@
 import { browser } from '$app/environment';
 
 export const mediaQueries = {
-	mobileToc: '(max-width: 155ch)',
-	mobileHeader: '(max-width: 768px)'
+	mobile: '(max-width: 155ch)'
 } as const;
 
 function mediaQueryState(query: string) {
@@ -24,5 +23,4 @@ function mediaQueryState(query: string) {
 	};
 }
 
-export const mobileToc = mediaQueryState(mediaQueries.mobileToc);
-export const mobileHeader = mediaQueryState(mediaQueries.mobileHeader);
+export const mobile = mediaQueryState(mediaQueries.mobile);

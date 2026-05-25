@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Toc } from '@stefanprobst/rehype-extract-toc';
-	import { mobileToc } from '$lib/mobile.svelte';
+	import { mobile } from '$lib/mobile.svelte';
 	import { toc } from '$lib/toc.svelte';
 	import TocToggleButton from '$lib/components/TocToggleButton.svelte';
 	import { fly } from 'svelte/transition';
@@ -11,7 +11,7 @@
 	let mounted = $state(false);
 
 	$effect(() => {
-		if (mobileToc.matches) {
+		if (mobile.matches) {
 			toc.open = false;
 		}
 	});
@@ -37,7 +37,7 @@
 
 	onMount(() => {
 		toc.available = true;
-		toc.open = !mobileToc.matches;
+		toc.open = !mobile.matches;
 		updateActiveSection();
 		window.addEventListener('scroll', updateActiveSection);
 
@@ -65,7 +65,7 @@
 
 <div
 	class="toc-sidebar {toc.open ? 'open' : 'closed'} {mounted ? 'mounted' : ''}"
-	class:narrow={mobileToc.matches}
+	class:narrow={mobile.matches}
 >
 	<TocToggleButton class="toc-burger" />
 	{#if toc.open}
