@@ -145,9 +145,6 @@ html {
     accent-color: var(--link);
     background: var(--background);
     background-attachment: fixed;
-    transition-property: color, background-color;
-    transition-duration: 0.2s;
-    transition-timing-function: var(--ease-in-out-1);
 }
 
 img, video {
