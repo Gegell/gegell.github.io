@@ -13,9 +13,7 @@
 </script>
 
 <div class="layout">
-	<header>
-		<Header />
-	</header>
+	<Header />
 	<main>
 		<PageTransition url={data.url}>
 			{@render children?.()}
@@ -31,11 +29,9 @@
 		display: grid;
 		grid-template-rows: auto 1fr auto;
 		margin-inline: auto;
-		padding-inline: var(--size-7);
 	}
 
-	header {
-		position: sticky;
-		top: 0;
+	main {
+		padding-inline: var(--size-7);
 	}
 </style>

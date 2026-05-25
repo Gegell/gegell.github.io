@@ -26,6 +26,7 @@
 		cursor: pointer;
 		box-shadow: none;
 		width: var(--size-8);
+		min-width: var(--size-8);
 		border-radius: 2em;
 		position: relative;
 		height: var(--size-5);

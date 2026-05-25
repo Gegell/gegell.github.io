@@ -1,16 +1,20 @@
 <script lang="ts">
 	import type { Toc } from '@stefanprobst/rehype-extract-toc';
-	import RiMenuFill from 'svelte-remixicon/RiMenuFill.svelte';
+	import { mobileToc } from '$lib/mobile.svelte';
+	import { toc } from '$lib/toc.svelte';
+	import TocToggleButton from '$lib/components/TocToggleButton.svelte';
 	import { fly } from 'svelte/transition';
 	import { onMount } from 'svelte';
 
 	let { headings = [] }: { headings?: Toc } = $props();
-	let open = $state(true);
 	let activeId = $state<string | null>(null);
+	let mounted = $state(false);
 
-	function toggleToc() {
-		open = !open;
-	}
+	$effect(() => {
+		if (mobileToc.matches) {
+			toc.open = false;
+		}
+	});
 
 	function updateActiveSection() {
 		// Get all headings on the page
@@ -32,11 +36,16 @@
 	}
 
 	onMount(() => {
+		toc.available = true;
+		toc.open = !mobileToc.matches;
 		updateActiveSection();
 		window.addEventListener('scroll', updateActiveSection);
 
+		mounted = true;
+
 		return () => {
 			window.removeEventListener('scroll', updateActiveSection);
+			toc.available = false;
 		};
 	});
 </script>
@@ -54,19 +63,14 @@
 	</ol>
 {/snippet}
 
-<div class="toc-sidebar {open ? 'open' : 'closed'}">
-	<button
-		class="toc-burger"
-		onclick={toggleToc}
-		aria-label="Toggle Table of Contents"
-		aria-expanded={open}
-		aria-controls="toc-nav"
-	>
-		<RiMenuFill size="28" />
-	</button>
-	{#if open}
+<div
+	class="toc-sidebar {toc.open ? 'open' : 'closed'} {mounted ? 'mounted' : ''}"
+	class:narrow={mobileToc.matches}
+>
+	<TocToggleButton class="toc-burger" />
+	{#if toc.open}
 		<!-- TODO: remove the snapping behaviour when hiding/showing the ToC -->
-		<nav id="toc-nav" class="toc" transition:fly={{ x: 50, duration: 400 }}>
+		<nav id="toc-nav" class="toc" transition:fly={{ y: -8, duration: 200 }}>
 			{@render tocList(headings)}
 		</nav>
 	{/if}
@@ -78,13 +82,10 @@
 		top: var(--size-10);
 		overflow: visible;
 		align-self: start;
+		z-index: 200;
 	}
-	.toc-burger {
-		background: var(--surface-4);
-		display: block;
-		border: none;
-		cursor: pointer;
-		margin-top: -0.75ch;
+	:global(.toc-burger) {
+		margin-top: -0ch;
 		margin-bottom: var(--size-relative-7);
 	}
 	.toc {
@@ -129,31 +130,34 @@
 
 	/* TODO: This is a jank way to switch between the different layouts and was only tested with my one singular post.
 	   Might need to be adjusted later. */
-	@media (max-width: 155ch) {
-		.toc-sidebar {
-			position: fixed;
-			inset-block-start: var(--size-10);
-			inset-inline-end: var(--size-5);
-			z-index: 20;
-			width: min(fit-content, 100%);
-		}
+	.toc-sidebar.narrow {
+		position: fixed;
+		inset-block-start: var(--size-10);
+		inset-inline-end: var(--size-5);
+		width: min(fit-content, 100%);
+	}
 
-		.toc-burger {
-			margin-inline-start: auto;
-			margin-bottom: 0;
-			box-shadow: var(--shadow-2);
-		}
+	.toc-sidebar.narrow :global(.toc-burger) {
+		display: none;
+		margin-inline-start: auto;
+		margin-bottom: 0;
+		box-shadow: var(--shadow-2);
+	}
 
-		.toc {
-			margin-top: var(--size-3);
-			max-block-size: calc(100dvh - var(--size-12));
-			overflow: auto;
-			padding: var(--size-4);
-			background: var(--surface-2);
-			border: 1px solid var(--border);
-			border-radius: var(--radius-3);
-			box-shadow: var(--shadow-5);
-			backdrop-filter: blur(12px);
-		}
+	.toc-sidebar.narrow .toc {
+		display: none;
+		margin-top: var(--size-3);
+		max-block-size: calc(100dvh - var(--size-12));
+		overflow: auto;
+		padding: var(--size-4);
+		background: var(--surface-2);
+		border: 1px solid var(--border);
+		border-radius: var(--radius-3);
+		box-shadow: var(--shadow-5);
+		backdrop-filter: blur(12px);
+	}
+
+	.toc-sidebar.narrow.mounted .toc {
+		display: block;
 	}
 </style>
