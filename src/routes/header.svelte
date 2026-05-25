@@ -59,13 +59,10 @@
 			</a>
 		</div>
 
-		<div class="header-center">
+		<div class="header-right">
 			{#if toc.available && mobile.matches}
 					<TocToggleButton />
 			{/if}
-		</div>
-
-		<div class="header-right">
 			<ThemeToggle />
 
 			<ul class="links">
@@ -97,21 +94,15 @@
 	
 	nav {
 		padding-block: var(--size-3);
-		gap: var(--size-4);
+		gap: var(--size-1) var(--size-8);
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
+		flex-wrap: wrap;
 	}
 
 	header.narrow nav {
 		border-bottom: 1px solid var(--border);
-	}
-	
-	.header-left,
-	.header-right {
-		/* flex: 1 1 0; */
-		min-width: 0;
-		width: fit-content;
 	}
 
 	.title {
@@ -122,14 +113,14 @@
 		white-space: nowrap;
 	}
 
-	.header-center {
-		flex: 0 0 auto;
-		display: grid;
-		place-items: center;
+	.header-left {
+		flex: 0 1 auto;
+		min-width: fit-content;
 	}
 
 	.header-right {
 		display: flex;
+		flex: 0 0 auto;
 		justify-content: end;
 		align-items: center;
 		gap: var(--size-4);

@@ -26,5 +26,6 @@
 		place-items: center;
 		border: none;
 		cursor: pointer;
+		min-width: fit-content;
 	}
 </style>
