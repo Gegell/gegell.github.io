@@ -163,6 +163,11 @@ code {
     font-size: var(--font-size-1);
 }
 
+:not(pre) > code {
+    word-break: break-word;
+    text-wrap: auto;
+}
+
 button:hover {
     --_highlight-size: none;
 }
