@@ -29,7 +29,12 @@ showToc: true
   <source src="./factorio-rng/img/legendary-autocrafter.mp4" type="video/mp4">
 </video>
 
-<!-- How did we get here? Below I recollect my journey figuring out how Factorio's RNG works. -->
+> [!warning]- Broken in Factorio 2.1 -- Version 2.0 only!
+> Factorio 2.1 changes the way the RNG is used.
+> 
+> This breaks my in-game implementations.
+> The theoretical aspects of how the RNG works still apply, as they still use the same RNG.
+> For more info see section [6.1. Factorio 2.1](#factorio-21).
 
 ## Introduction
 With the release of the Space-Age DLC in Factorio several new mechanics were introduced.
@@ -155,15 +160,14 @@ variants in Python so they can be run using [sympy](https://www.sympy.org/), a P
 Advancing both variants by a single step confirms that all bits of the corresponding registers update
 in the exact same fashion. I used sympy here because doing these equivalence checks by
 hand ($3 \cdot 32 = 96$) would have been quite tedious.
-> [!warning] TODO
-> add link to my code which proves equivalence
+The corresponding code can be found [here](https://github.com/Gegell/Factorio-RNG-Release/blob/main/00_equality_proof.ipynb).
 
 Ok, with all that established, we are certain that the RNG used in Factorio is indeed the `taus88` generator,
 which itself is a combination of 3 LFSRs.
-This is a very interesting result, as LFSRs are known to be quite weak PRNGs,
-online one even finds the statement that they are *trivially breakable*.[^trivially-breakable]
+This is a very interesting result, as LFSRs are known to be quite weak PRNGs --
+in the literature one even finds the statement that they are *trivially breakable*.[^trivially-breakable]
 
-[^trivially-breakable]: *Trivially breakable* for security researchers seems to mean that *they* know how to break them hence its easy, even if still takes some setup to understand.
+[^trivially-breakable]: *Trivially breakable* for security researchers seems to mean that *they* know how to break them, hence its easy, even if still takes some setup to understand.
 
 To understand what makes them "*weak*" and how we can exploit this weakness to predict the future RNG calls,
 we first need to look at the underlying mathematics of LFSRs, which is the subject of the next section.
@@ -318,8 +322,8 @@ $\mathbb{R}^{m \times n}$ matrices to arbitrary matrices, regardless of the unde
 And as luck would have it, the previously defined operations XOR and AND on the bits span a *field*!
 
 [^maths-naming]: 
-  This is basically the mathematical variant of programming using generics, where we can write algorithms which work for any type which satisfies the necessary properties.
-  And just like in generic programming, the naming often sucks :) But it somehow stuck... 
+  This part of the project is where I realized that structures like *Field*, *Ring*, *Monoid* are basically the mathematical variant of programming using generics, where we can write algorithms which work for any type which satisfies the necessary properties.
+  And just like when programming anything, the naming often sucks :) But somehow sticks... 
 
 Taking another look at the symbolic example, we can reformulate each individual bits transition as a *linear* combination of previous bit states:
 $$
@@ -713,11 +717,12 @@ Its plot indicates the following:
 What we just calculated can be seen as a discretized version of
 [Shannon entropy](https://en.wikipedia.org/wiki/Entropy_(information_theory)).
 As such, we have a measure applicable to all available recipes allowing us to identify those which yield the largest amount of information per craft.
-By extracting the relevant recipe data from the raw game dump [^data_dump] we can programmatically compute the entropy for each recipe.
+By extracting the relevant recipe data from the raw game dump[^data_dump] we can programmatically compute the entropy for each recipe.
 
-[^data_dump]: Factorio actually provides one with command line arguments.
+[^data_dump]: Factorio actually provides a way to dump the data by running with command line arguments.
   One of these is `--dump-data` which outputs a JSON file containing the processed prototypes as they are loaded in-game.
   This can then be parsed for further processing, such as extracting the various recipes.
+  However, I just used the data bundled with [draftsman](https://github.com/redruin1/factorio-draftsman).
 
 Doing so yields the following table of recipes and their corresponding expected bits of information per craft, alongside how long each craft takes:
 
@@ -855,7 +860,7 @@ To do so, remember that any matrix-vector product can be seen as a weighted sum 
 $$
 Ax = \sum_{k=1}^n x_k [A]_k = x_1 \overset{\rightarrow}{a}_1 + \dots + x_n \overset{\rightarrow}{a}_n
 $$
-In this case, as we are performing our computations in $GF(2)$, all values are either 0 or 1, meaning the multiply can be represented with a simple conditional, while the sum is substituted with an XOR over all the weighted vectors:
+In this case, as we are performing our computations in $GF(2)$, each entry is either 0 or 1, meaning the multiply can be represented with a simple conditional, while the sum is substituted with an XOR over all the weighted vectors:
 $$
 s^{(t+88)} = \bigoplus_{k=0}^{87} o^{(t+k)} \cdot [\tilde A^{-1}]_k
 $$
@@ -874,7 +879,7 @@ As such the vectors are represented by 96 different signals.
 </figure>
 
 Finally we require the XOR of all these vectors to obtain the final state.
-This can be achieved via implicit addition. [^implicit-addition]
+This can be achieved via implicit addition.[^implicit-addition]
 Summing the values of a single signal and extracting only the last bit of this sum is equivalent to taking the XOR over all of them.
 As such, by wiring all decider outputs together, a single *arithmetic combinator* can perform the bit extraction by ANDing the pointwise sums with 1.
 
@@ -1069,9 +1074,12 @@ The short answer: Very unlikely.
 
 But why?
 It's not that I want to keep this tech for my self.
-In fact, here is the [world download link](placeholder), a [blueprint string](placeholder)
-and the relevant cleaned up [python code](placeholder) for you to play with.
+In fact, here is the [world download], a [blueprint string]
+and the relevant cleaned up [python code](https://github.com/Gegell/Factorio-RNG-Release) for you to play with.
 No, it rather has to do with the way that Factorio currently handles their random generators.
+
+[world download]: https://github.com/Gegell/Factorio-RNG-Release/raw/refs/heads/main/Breaking%20PRNG%20release.zip
+[blueprint string]: https://github.com/Gegell/Factorio-RNG-Release/raw/refs/heads/main/30_rng_breaker_blueprint_book.txt
 
 For this we can take another look into the game binary.
 After browsing a bit we encounter the `Map` object, which among other things as references to the individual *surfaces*
@@ -1104,9 +1112,9 @@ To be honest, I still don't know what some of them do, I was only interested in 
 > To try and track all the RNGs and what potential call paths are which lead to a random number call,
 > I made use of binary ninja and its python scripting to extract a call tree originating from the
 > `RandomNumberGenerator::getInt` call and its derivatives.[^call-tree]
-> The corresponding scripts for scraping are available [here](placeholder).
+> The corresponding scripts for scraping are available [here](https://github.com/Gegell/Factorio-RNG-Release/blob/main/20_bn_tag_factorio_rng_references.py).
 
-[^call-tree]: If I can I would like to add the call tree here, though its (i) quite cluttered in its current form and (ii) unclear whether I am allowed to (should ask @Wube).
+[^call-tree]: If I can I would like to add the call tree here, though (i) in its current form its quite cluttered needing some further cleanup and (ii) unclear whether I am even allowed to as it includes a whole bunch of the games function names. Maybe if @Wube is ok with it, I can add it here.
 
 Here we can already see a saving grace for RNG manipulation.
 Not all random effects are handled by the same RNG, and thus we can at least isolate some of them from the rest of the game logic.
@@ -1142,8 +1150,29 @@ it should be taken into account from the get-go, rather than being retro fitted 
 
 > [!check] If anyone wants to give it a shot, feel free to try and let me know how/if it works out.
 
+### Factorio 2.1
+With the last major update to Factorio, the way the RNG is used has changed.
+While they still use `taus88` as the underlying generator, they have fundamentally rewritten major parts of the item creation logic, reusing a single call for multiple item outputs.
+
+Additionally from what I can currently tell, now *every* single crafting operation uses the RNG, even if it is deterministic,
+to fill the shared call field in case anything later on will require it.
+This would now mean that *no other machine* can be running in parallel, as it will always interfere with the RNG state.
+
+Moreover, due to the sharing of the rolls, using *scrap recycling* to skip the RNG forwards is no longer useful, as the RNG is queried the same amount for any recycled item, and dealing with scrap recycling productivity and its many outputs increases the overhead a bunch. As such this could be replaced with the recycling of any other simpler/cheaper item instead -- at least it's no longer directly bound to Fulgora.
+
+Lastly, while the update is still in the experimental branches I have been somewhat on a rollercoaster ride seeing different changes to the RNG system.
+At one point, the `Map::generalRandomGenerator` was used to control the *FISH* motion.
+This of course would be a huge problem, as it meant that *any* fish on the map generated an unknown number of RNG calls, leading to it continuously desynchronizing the RNG state from the predictions without any feasible way to account for it shy of *removing all fish* from the map (without generating any new chunks with new fish).
+Thankfully, this was changed in a later update (its gone in version 2.1.13) with a new seventh RNG on the `Map` object, called `Map::fishRandomGenerator`. Guess what its job is :)
+
+However its not all bad.
+For instance, with the forced move away from scrap recycling, and the addition of universe wide signals (allowing us to send when Fulgora lightning storms start to other planets) we are no longer bound to any specific planet, and could instead build the manipulator on Vulcanus, gobbling up however many resources the skipping now requires, sending a signal to any other planet to craft local legendaries when the RNG is in the right state.
+
+For now, I will leave it at that, as the game may further change while it is still in experimental,
+so any updates to the cracker might just get broken by the next update without notice.
+
 ## Conclusion
-To recap: we took a look at the Factorio's internal random number generator: `taus88`,
+<!-- To recap: we took a look at the Factorio's internal random number generator: `taus88`,
 went over its construction from linear feedback shift registers and showed how they can be modeled and predicted.
 
 Then we built an in-game machine which allows one to *read* the current state, *predict* future states, and automatically *manipulate* the game state towards a favorable outcome.
@@ -1155,21 +1184,24 @@ as the shared RNG state across different mechanics makes it intractable to actua
 
 <br/>
 
---- 
+---  -->
 
-This marks the completion of a two-year project, reaching the fully autonomous gamblen't I wanted from the beginning.
-Though to be fair, most of the latter part was me procrastinating on writing this here post.
+This marks the completion of a two+ year project, finally reaching the fully autonomous *gamblen't* I wanted from the beginning.
+Though to be fair, most of the latter part was me procrastinating on writing and publishing this post.
+In the meantime (while I was dragging my feet), others have also looked into the RNG, who I'll link here for reference:
+
+- `@kovaxis` in the [Factorio forums](https://forums.factorio.com/viewtopic.php?p=660560), reaching and stopping at a similar point as I did initially, where the state is computed with an external python script from some in-game observations.
+- `@d4s_over_dt4` on the [Factorio discord](https://discord.com/channels/139677590393716737/1519277014056570910), who built a combinator circuit to compute the RNG state, read out from 3 placed selector combinators (which each query the general RNG to seed each combinators own state), without further followup integration or verification.
 
 Boy there were quite some tangents along the way which did not even make it into this post,
-as its long enough already, such as me recreating [cnide] with improved handling for subnets
-for documentation and simulation purposes as well as syntax highlighting in vscode,
+as its long enough already, such as me partially recreating [cnide] with improved handling for subnets just for documentation and simulation purposes as with syntax highlighting in vscode,
 or the first implementation attempt where I did *all* the matrix math in game,
-including the creation of the matrix and Gaussian elimination of said matrix.
+including the creation of the matrix and Gaussian elimination of said matrix.[^ingame-matrix-ge]
+
+[^ingame-matrix-ge]: The Gaussian elimination in game is actually also included in the [world download], with some instructions on how to use it.
 
 [cnide]: https://github.com/charredUtensil/cnide
 
 Thanks go out towards @earthcomputer and co. who unknowingly inspired this project,
-as their ["Mess Detector"](https://www.youtube.com/watch?v=FPmQ0rnJjNc) did something similar but in Minecraft instead.
-Additionally, @kovaxis in the [Factorio forums](https://forums.factorio.com/viewtopic.php?p=660560), reaching and stopping at a similar point as I did initially, where the state is computed with an external python script from some in-game observations.
-
-Lastly, everyone who motivated me to finish this writeup after hearing me rambling about rngs -- thanks :)
+as their ["Mess Detector"](https://www.youtube.com/watch?v=FPmQ0rnJjNc) also reads out the RNG state with only in-game mechanics,
+and everyone close to me who bullied me into finally finishing this writeup after hearing me rambling about RNGs for the past 2 years :)
