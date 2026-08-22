@@ -3,7 +3,7 @@ title: Test Post
 description: This is a test post showcasing some of the features of the blog.
 date: '2024-04-20'
 categories: ['foo', 'bar']
-published: true
+published: false
 ---
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam nec purus nec
 $a + b$
