@@ -17,6 +17,8 @@
 		"@sveltejs/kit": "^2.20.8",
 		"@sveltejs/vite-plugin-svelte": "^4.0.4",
 		"@types/eslint": "^8.56.12",
+		"@types/hast": "^3.0.4",
+		"@types/mdast": "^4.0.4",
 		"@typescript-eslint/eslint-plugin": "^7.18.0",
 		"@typescript-eslint/parser": "^7.18.0",
 		"eslint": "^8.57.1",
@@ -37,6 +39,7 @@
 		"svelte-remixicon": "^2.7.0",
 		"tslib": "^2.8.1",
 		"typescript": "^5.8.3",
+		"vfile": "^6.0.3",
 		"vite": "^5.4.19"
 	},
 	"type": "module",

@@ -4,14 +4,14 @@ import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import { mdsvex, escapeSvelte } from 'mdsvex';
 import remarkMath from 'remark-math';
 import remarkFootnotes from 'remark-footnotes';
-import remarkFootnoteNumbering from './src/lib/remark-footnote-numbering.js';
+import remarkFootnoteNumbering from './src/lib/remark-footnote-numbering.ts';
 import rehypeKatexSvelte from 'rehype-katex-svelte';
 import rehypeCallouts from 'rehype-callouts';
 import { createHighlighter } from 'shiki'
 import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import rehypeToc from '@stefanprobst/rehype-extract-toc';
-import rehypeTocExport from './src/lib/rehype-toc-export.js';
+import rehypeTocExport from './src/lib/rehype-toc-export.ts';
 import relativeImages from 'mdsvex-relative-images';
 
 const highlighter = await createHighlighter({

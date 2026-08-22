@@ -1,5 +1,6 @@
 import type { Post } from '$lib/types.js';
 import { error } from '@sveltejs/kit';
+import { resolvePostAsset } from '$lib/post-assets';
 
 export async function load({ params }) {
 	try {
@@ -8,9 +9,10 @@ export async function load({ params }) {
 		const metadata = post.metadata as Omit<Post, 'content' | 'slug'>;
 
 		return {
+			...metadata,
 			content: post.default,
 			slug: slug,
-			...metadata
+			image: resolvePostAsset(slug, metadata.image)
 		} satisfies Post;
 	} catch (err) {
 		return error(404, `Could not find post ${params.slug}`);

@@ -1,5 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { Post, PostSummary } from '$lib/types';
+import { resolvePostAsset } from '$lib/post-assets';
 
 async function getPosts() {
 	let posts: PostSummary[] = [];
@@ -15,16 +16,7 @@ async function getPosts() {
 			if (!full_meta.published) continue; // Skip unpublished posts
 
 			const { title, date, description, categories } = full_meta as Omit<PostSummary, 'slug'>;
-			let { image } = full_meta as Omit<PostSummary, 'slug'>;
-
-			if (image) {
-				if (image.startsWith(`./${slug}/`)) {
-					image = image.replace(`./${slug}/`, '');
-				} else if (image.startsWith('./')) {
-					image = image.replace('./', '');
-				}
-				image = `/src/posts/${slug}/${image}`; // Adjust image path if it exists and is not already absolute
-			}
+			const image = resolvePostAsset(slug, full_meta.image);
 			const post = { title, date, description, categories, image, slug } satisfies PostSummary;
 			posts.push(post);
 		}
