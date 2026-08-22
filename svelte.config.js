@@ -65,10 +65,10 @@ const config = {
 		adapter: adapter({
 			pages: 'build',
 			assets: 'build',
-			fallback: null
+			fallback: '404.html'
 		}),
 		paths: {
-			base: process.argv.includes('dev') ? '' : process.env.BASE_PATH
+			base: process.argv.includes('dev') ? '' : (process.env.BASE_PATH ?? '')
 		},
 		prerender: {
 			handleHttpError: ({ path, referrer, message }) => {
