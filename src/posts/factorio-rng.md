@@ -2,7 +2,7 @@
 title: Reversing Factorio's RNG
 description: This post details how Factorio's random number generation works, how it can be reversed and how I used that knowledge to predict and manipulate the RNG with pure in‑game mechanics. 
 image: ./factorio-rng/img/factorio-breaking-rng-thumbnail.jpg
-date: '2024-04-20'
+date: '2026-08-22' #'2024-04-20'
 categories: 
     - 'Factorio'
     - 'RNG'

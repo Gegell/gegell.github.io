@@ -5,7 +5,7 @@
     startYear?: number;
   }
 
-  let { startYear = 2024 }: Props = $props();
+  let { startYear = 2026 }: Props = $props();
   let year = new Date().getFullYear();
 </script>
 
