@@ -87,6 +87,9 @@
 		return i ? 'var(--color-lit)' : 'var(--color-dim)';
 	}
 
+	const dx = 80;
+	const r = 15;
+
 	const fullViewBoxHeight = 84;
 	const compactViewBoxHeight = 44;
 	const fullContainerHeightEm = 5;
@@ -94,6 +97,13 @@
 	let lfsrBits = $derived([...Array(bitCount).keys()].map((i) => (lfsr >> (bitCount - i - 1)) & 1));
 	let currentBit = $derived(lfsr & 1);
 	let viewBoxHeight = $derived(tapMask != 0 ? fullViewBoxHeight : compactViewBoxHeight);
+	let viewBoxWidth = $derived(
+			(bitCount-1) * dx        // bits
+		+ 2*r                      // last bit radius
+		+ 4                        // 2x margin
+		+ (tapMask != 0 ? 20 : 0)  // feedback loop
+		+ (!hideOutput ? dx + 60 : 0)
+	)
 	let containerHeight = $derived(
 		`${(fullContainerHeightEm * viewBoxHeight) / fullViewBoxHeight}em`
 	);
@@ -103,7 +113,7 @@
 </script>
 
 <div class="container" style:height={containerHeight}>
-	<svg viewBox="-2 -2 {(bitCount - 0.5) * 80 + 4} {viewBoxHeight}">
+	<svg viewBox="-17 -2 {viewBoxWidth} {viewBoxHeight}">
 		<defs>
 			<marker id="circle" markerWidth="8" markerHeight="8" refX="5" refY="5">
 				<circle cx="5" cy="5" r="2" fill="context-stroke" />
@@ -162,15 +172,15 @@
 
 		<!-- LFSR bits + inter mitten XORs -->
 		{#each lfsrBits as bit, i}
-			<Bit x={i * 80} y={15} r={15} set={!!bit} onclick={() => toggleBit(i)} bind:ref={bitEls[i]} />
+			<Bit x={i * dx} y={r} r={r} set={!!bit} onclick={() => toggleBit(i)} bind:ref={bitEls[i]} />
 			{#if i < lfsrBits.length - 1 && isTap(i + 1)}
-				<Xor x={i * 80 + 40} y={15} r={10} bind:ref={xorEls[i]} />
+				<Xor x={(i + 0.5) * dx} y={r} r={10} bind:ref={xorEls[i]} />
 			{/if}
 		{/each}
 
 		<!-- History of output bits -->
 		{#if !reverse && !hideOutput}
-			<History bind:this={historyEl} x={bitCount * 80} y={15} current={currentBit} />
+			<History bind:this={historyEl} x={bitCount * dx} y={r} current={currentBit} />
 		{/if}
 	</svg>
 </div>
