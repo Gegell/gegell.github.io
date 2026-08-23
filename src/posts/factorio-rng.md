@@ -39,7 +39,8 @@ showToc: true
 ## Introduction
 With the release of the Space-Age DLC in Factorio several new mechanics were introduced.
 One major mechanic was the new concept of different items and building *qualities*.
-By default, items are common quality, but if add *quality modules* to the crafting machine we gain a small chance to obtain items of higher quality.
+By default, items are created with common quality. 
+If quality modules are used in the crafting machine we gain a small chance to obtain items of higher quality.
 
 What does that entail? In short: Items and buildings gain improved stats, such as faster crafting speeds, modules providing stronger buffs, power poles having an increased range and inserters swinging faster.
 Thats pretty neat -- hence we are interested in obtaining the highest possible quality on our items and buildings.
@@ -118,7 +119,7 @@ class linear_feedback_shift_engine {
 [lfsr]: https://www.boost.org/doc/libs/1_88_0/boost/random/linear_feedback_shift.hpp
 
 This means that taus88 consists of 3 [`linear_feedback_shift_engine`][lfsr] whose results are XORed together.
-Note that this linear feedback shift engine is more commonly referred to as *LFSR*: *linear feedback shift register*.
+Note that this linear feedback shift engine is more commonly referred to as a *linear feedback shift register* (LFSR).
 
 Though when starting the project that post was already 8 years old.
 Hence, I wanted to cross-check the information given on the forum against the most
@@ -174,7 +175,7 @@ we first need to look at the underlying mathematics of LFSRs, which is the subje
 
 ## LFSR Maths Review
 To begin, we need to understand what the *linear feedback shift register* (LFSR) actually models.
-First, consider a simple *register*.
+First, consider a simple register.
 It describes a collection of bits, aggregated into a single value $x$:
 $$ 
 x = x_{n-1} \dots x_2 x_1 x_0
@@ -184,12 +185,12 @@ While it is common to consider this register value $x$ to represent a number in 
 it is more useful in our case to instead consider the register to actually describe a *vector* of individual bits, i.e. $x \in \mathbb{F}_2^n$.
 Additionally, we consider two operations which operate on each individual bit:
 1. $x_i \oplus y_i$: The XOR operation takes 2 bits and returns 1 if the bits differ and 0 if they are equal.
-   Note that this is equivalent to *addition* modulo 2.
+   Note that this is equivalent to addition modulo 2.
 2. $x_i \cdot y_i$: The AND operation takes 2 bits and returns 1 if both bits are 1, otherwise it returns 0.
-   This is equivalent to *multiplication* modulo 2.
+   This is equivalent to multiplication modulo 2.
 
 
-Now extend that notion of a register into a *shift register*.
+Now extend that notion of a register into a shift register.
 To shift, move all bits in the register downwards by taking each higher bit and shifting it 1 position down,
 dropping the lowest bit as the output.
 Here we follow the convention that the most significant bit (highest bit) is the leftmost bit $x_{n-1}$ and the least significant bit is the rightmost bit $x_0$.
@@ -202,11 +203,11 @@ Tap the individual bits to toggle them, and use the controls to start, stop and 
 Well... This is boring! We converge pretty quickly to the same value of 0 regardless of the initial state.
 This does not seem random at all!
 To keep our shift register from always just discarding all information we will add another component,
-namely some *feedback*.
+namely some feedback.
 The first idea is to just loop the discarded lowest bit back into the highest bit,
 as it previously had no preceding bit from which it could obtain (new) information,
 while we discard information in the lowest bit.
-Doing this we have basically implemented a *bit roll* operation:
+Doing this we have basically implemented a bit roll operation:
 
 <LFSR tapMask=0b100000 />
 
@@ -214,8 +215,8 @@ Hmmm... At least we no longer always arrive at an empty register.
 But the sequence when the last bit lights up is very predictable. 
 This is due to the fact that the information that we observe repeats every $n$ steps 
 -- each bit remains unmodified after all!
-Thanks to the low cycle length, one can again quickly spot the pattern produced by our current *feedback shift register*.
-To combat this we insert some *linear feedback*, by adding the feedback not
+Thanks to the low cycle length, one can again quickly spot the pattern produced by our current feedback shift register.
+To combat this we insert some linear feedback, by adding the feedback not
 only to the first bit, but also some intermediate bits.
 Note that addition here means XOR, as we are working with individual bits:
 
@@ -252,7 +253,7 @@ In particular, given the state $x^{(t)}$ at time $t$ we now know how to:
 > In other words, not all feedback configurations are equally good, and the choice of feedback taps is crucial to ensure a long cycle length.
 
 ### LFSRs are linear
-Let us take another look at the *linearity* claim of above.
+Let us take another look at the linearity claim from above.
 To do that rather than considering arbitrary instantiations of $x$,
 i.e. states where all bits were set to either 0 or 1,
 we can now consider a symbolic representation of the LFSR.
@@ -273,7 +274,7 @@ Now what has this got to do with linearity?
 
 First of all, note that the set of bits $\mathbb{F}_2 = \{0, 1\}$ joined with the operations $\oplus$ and $\cdot$ form a structure known as a [*field*][wiki-field]. 
 This field is commonly known as the *Galois field* $\text{GF}(2)~=~\mathbb{Z}/2\mathbb{Z}~=~\mathbb{F}_2$
-or the *modular arithmetic* mod 2.
+or the modular arithmetic mod 2.
 A field is just a math term for a set of values joined with some operations which satisfy a certain set of properties (see below).
 
 > [!info]- Field properties of $(\mathbb{F}_2, \oplus, \cdot)$
@@ -289,10 +290,10 @@ A field is just a math term for a set of values joined with some operations whic
 > at most 8 rows are necessary.
 
 Why do we care about this? 
-Because having a *field* structure is a prerequisite for [*vector spaces*][wiki-vector-space].
+Because having a field structure is a prerequisite for [*vector spaces*][wiki-vector-space].
 In particular here, we consider the vector space spanning all vectors of length $n$ over the field $\text{GF}(2)$, which is denoted as $\text{GF}(2)^n$.
 The operators are now applied pointwise to each coordinate of the vector using the operators from original the field $\text{GF}(2)$.
-And wherever we have a vector space, we can talk about *linear* combinations of vectors.
+And wherever we have a vector space, we can talk about linear combinations of vectors.
 
 [wiki-field]: https://en.wikipedia.org/wiki/Field_(mathematics)
 [wiki-vector-space]: https://en.wikipedia.org/wiki/Vector_space#Definition_and_basic_properties
@@ -316,16 +317,16 @@ And wherever we have a vector space, we can talk about *linear* combinations of 
 Personally, after getting an introduction into linear algebra and vector spaces within that abstract framework,
 I subsequently only ever saw them applied to either $\mathbb{R}^n$ or, if spicy, to $\mathbb{C}^n$.
 However, the original definition of a vector space is kept very generic on purpose!
-It allows *any* structure which satisfies the necessary properties to be manipulated in the same way,
+It allows any structure which satisfies the necessary properties to be manipulated in the same way,
 enabling us to apply well-known algorithms that you may have only seen applied to systems described by
 $\mathbb{R}^{m \times n}$ matrices to arbitrary matrices, regardless of the underlying field $F$.[^maths-naming]
-And as luck would have it, the previously defined operations XOR and AND on the bits span a *field*!
+And as luck would have it, the previously defined operations XOR and AND on the bits span a field!
 
 [^maths-naming]: 
   This part of the project is where I realized that structures like *Field*, *Ring*, *Monoid* are basically the mathematical variant of programming using generics, where we can write algorithms which work for any type which satisfies the necessary properties.
   And just like when programming anything, the naming often sucks :) But somehow sticks... 
 
-Taking another look at the symbolic example, we can reformulate each individual bits transition as a *linear* combination of previous bit states:
+Taking another look at the symbolic example, we can reformulate each individual bits transition as a linear combination of previous bit states:
 $$
 \begin{align*}
 x_3^{(t+1)} &= x_0^{(t)} \\
@@ -334,10 +335,10 @@ x_1^{(t+1)} &= x_2^{(t)} \\
 x_0^{(t+1)} &= x_1^{(t)}
 \end{align*}
 $$
-Since we can write the entire state as a vector of these bits, and each transition is *linear* itself,
+Since we can write the entire state as a vector of these bits, and each transition is linear itself,
 this means we can write the transition between the current state 
 $s^{(t)} \in \text{GF}(2)^n$ to the next state $s^{(t+1)} \in \text{GF}(2)^n$
-as a *matrix product*:
+as a matrix product:
 $$
 s^{(t+1)} = T s^{(t)}
 $$
@@ -417,7 +418,7 @@ In them we also nicely see the independence from the lowest $w-k$ bits, as they 
 </figure>
 
 Note that unlike the previously discussed LFSRs these change more than just the feedback bits directly.
-This is what the paramter $s$ does in the `linear_feedback_shift_engine` constructor, which essentially is the number of steps each individual LFSR is advanced in a single step.
+This is what the parameter $s$ does in the `linear_feedback_shift_engine` constructor, which essentially is the number of steps each individual LFSR is advanced in a single step.
 
 ### Inverting an LFSR
 Going forward quickly is already nice.
@@ -484,7 +485,7 @@ def invert(M):
   return system.I
 ```
 
-> [!note] Regarding the Invertibility of $T_i$ in taus88
+> [!note]+ Regarding the Invertibility of $T_i$ in taus88
 > If we consider the LFSRs as given by the boost library - and the parameters
 > used to instantiate them - we will notice that they operate on $n=32$ bit words,
 > while the actual LFSR sizes are 31, 29 and 28 respectively. This means that a
@@ -499,15 +500,14 @@ def invert(M):
 > 
 > **HOWEVER:** As we know the lower bits to always just be linear combinations
 > of the higher bits, we can reduce the transition matrices of the individual
-> LFSRs to $31\times31$, $29\times29$ and $28\times28$ respectively, restoring
-> the full rank (and my claim that the transition matrices are invertible by construction).
-> If these reduced matrices are then used to compute the internal state from the
+> LFSRs to $31\times31$, $29\times29$ and $28\times28$ respectively.
+> This restores the full rank and hence my claim that the transition matrices are invertible by construction holds.
+> Using these reduced matrices to compute the internal state from the
 > observed outputs, we can compute the remaining lower bits from the values of the
-> higher bits, allowing us to restore the full state. This is not strictly necessary
-> to do, as should we decide to simply step the computed state as is (e.g. with
-> the linearly dependent bits filled to 0) then we will obtain the true state
-> of all bits after a single step forward, as this will include computing the
-> linear combination of the higher bits for the lower bits.
+> higher bits, allowing full state restoration. This however is not strictly an extra step.
+> When the computed state is advanced as is (e.g. with the linearly dependent bits filled to 0)
+> then the full state of all bits is available after a single forward step,
+> as a single step includes computing lower bits by the linear combination of the higher bits.
 
 
 ### Combining multiple LFSRs
@@ -541,8 +541,7 @@ $$
 o^{(t)} = \begin{bmatrix}I  &  I  &  I\end{bmatrix} s^{(t)}
 $$
 
-where $I \in \text{GF}(2)^{n \times n}$ is the corresponding identity matrix 
-(i.e. 1's along the diagonal, 0 everywhere else). If we just look at this, we
+where $I \in \text{GF}(2)^{n \times n}$ is the corresponding identity matrix. If we just look at this, we
 might think that the entire thing turned non-invertible again. And this would be
 true, if we only look at a single output. But what happens if we step the random generator
 multiple times? The first output stays as it was, the next are:
@@ -596,7 +595,7 @@ As such, let's take a look at both of these issues, and how we can address them.
 
 ### Consecutive calls
 In the previous derivation we utilized the states $s^{(t)}$, $s^{(t+1)}$ and $s^{(t+2)}$
-which correspond to using the full width of 3 *consecutive* calls.
+which correspond to using the full width of 3 consecutive calls.
 As we are not necessarily the only system in the simulation requesting
 RNG values at any given time, we need to consider a non-isolated case.
 There are several ways to tackle this:
@@ -612,11 +611,11 @@ There are several ways to tackle this:
    One of the triggered mechanisms is of course the creation of the crafting results within
    all machines finishing their item crafting cycle.
    If we now can harness the order in which the machines queue the item creation events,
-   placing our *entropy generators* in a consecutive block within this queue,
+   placing our entropy generators in a consecutive block within this queue,
    we force the RNG calls to be gapless, ensuring proper state reconstruction can occur.
 
 For my implementation I chose to pursue both option 2 and 3.
-The former, as it does not rely on internal update orders, is the fallback method which should *always*
+The former, as it does not rely on internal update orders, is the fallback method which should always
 work (as long as the devs do not change the RNG away from `taus88`).
 Meanwhile, in theory, the latter approach allows for much faster state readout and more
 robustness against extraneous outside calls.
@@ -647,14 +646,14 @@ questions about the output, depending on the chosen method. Some examples are:
   the recipe yields non-integer item stacks (e.g. [recycling](https://wiki.factorio.com/Recycler) recipes,
   which return 25% of the items required to craft a single input item or the item itself in case it is a self-recycle recipe),
   **or** it is a recipe with inherently random outputs (e.g. [uranium processing](https://wiki.factorio.com/Uranium_processing),
-  where there is a 0.7% chance of a U-235 being produced and a 0.7% chance of *not* producing a U-238).
+  where there is a 0.7% chance of a U-235 being produced and a 0.7% chance of not producing a U-238).
 - The quality level of the output. We can measure if it rose in level,
   and if yes by how many at once.
 
 I'm going to focus on the first of the two methods, just observing the amount of
 produced items -- as this was the only source of information I had available when
 I started this project. The thing to realize is that answering any of these
-questions yields us only information about some of the *top bits* of the RNG
+questions yields us only information about some of the top bits of the RNG
 roll result.
 
 Let's stick with the example of refining uranium ore into U-235 and U-238.
@@ -1111,10 +1110,8 @@ To be honest, I still don't know what some of them do, I was only interested in 
 > 
 > To try and track all the RNGs and what potential call paths are which lead to a random number call,
 > I made use of binary ninja and its python scripting to extract a call tree originating from the
-> `RandomNumberGenerator::getInt` call and its derivatives.[^call-tree]
+> `RandomNumberGenerator::getInt` call and its derivatives.
 > The corresponding scripts for scraping are available [here](https://github.com/Gegell/Factorio-RNG-Release/blob/main/20_bn_tag_factorio_rng_references.py).
-
-[^call-tree]: If I can I would like to add the call tree here, though (i) in its current form its quite cluttered needing some further cleanup and (ii) unclear whether I am even allowed to as it includes a whole bunch of the games function names. Maybe if @Wube is ok with it, I can add it here.
 
 Here we can already see a saving grace for RNG manipulation.
 Not all random effects are handled by the same RNG, and thus we can at least isolate some of them from the rest of the game logic.
@@ -1145,8 +1142,8 @@ leading to potentially thousands of calls occurring in just a second, outpacing 
 
 While it *might* be possible to account for all / many of the randomness sources above,
 e.g. by dynamically disabling any other production lines doing random calling using for example a logistics group,
-and waiting for daytime on Fulgora it may be possible to apply this in an actual safe game,
-it should be taken into account from the get-go, rather than being retro fitted into an existing save.
+and waiting for daytime on Fulgora it may be possible to apply this in an actual game save,
+it should be taken into account from the get-go, rather than being retrofitted into an existing save.
 
 > [!check] If anyone wants to give it a shot, feel free to try and let me know how/if it works out.
 
@@ -1156,13 +1153,13 @@ While they still use `taus88` as the underlying generator, they have fundamental
 
 Additionally from what I can currently tell, now *every* single crafting operation uses the RNG, even if it is deterministic,
 to fill the shared call field in case anything later on will require it.
-This would now mean that *no other machine* can be running in parallel, as it will always interfere with the RNG state.
+This means that no other machine can run in parallel, as it will always interfere with the RNG state.
 
-Moreover, due to the sharing of the rolls, using *scrap recycling* to skip the RNG forwards is no longer useful, as the RNG is queried the same amount for any recycled item, and dealing with scrap recycling productivity and its many outputs increases the overhead a bunch. As such this could be replaced with the recycling of any other simpler/cheaper item instead -- at least it's no longer directly bound to Fulgora.
+Moreover, due to the sharing of the rolls, using scrap recycling to skip the RNG forwards is no longer useful, as the RNG is queried the same amount for any recycled item, and dealing with scrap recycling productivity and its many outputs increases the overhead a bunch. As such this could be replaced with the recycling of any other simpler/cheaper item instead -- at least it's no longer directly bound to Fulgora.
 
 Lastly, while the update is still in the experimental branches I have been somewhat on a rollercoaster ride seeing different changes to the RNG system.
 At one point, the `Map::generalRandomGenerator` was used to control the *FISH* motion.
-This of course would be a huge problem, as it meant that *any* fish on the map generated an unknown number of RNG calls, leading to it continuously desynchronizing the RNG state from the predictions without any feasible way to account for it shy of *removing all fish* from the map (without generating any new chunks with new fish).
+This of course would be a huge problem, as it meant that any fish on the map generated an unknown number of RNG calls, leading to it continuously desynchronizing the RNG state from the predictions without any feasible way to account for it shy of *removing all fish* from the map (without generating any new chunks with new fish).
 Thankfully, this was changed in a later update (its gone in version 2.1.13) with a new seventh RNG on the `Map` object, called `Map::fishRandomGenerator`. Guess what its job is :)
 
 However its not all bad.
@@ -1202,6 +1199,6 @@ including the creation of the matrix and Gaussian elimination of said matrix.[^i
 
 [cnide]: https://github.com/charredUtensil/cnide
 
-Thanks go out towards @earthcomputer and co. who unknowingly inspired this project,
-as their ["Mess Detector"](https://www.youtube.com/watch?v=FPmQ0rnJjNc) also reads out the RNG state with only in-game mechanics,
+Thanks go out towards `@earthcomputer` and co. who unknowingly inspired this project,
+as their ["Mess Detector"](https://www.youtube.com/watch?v=FPmQ0rnJjNc) reads out Minecrafts RNG state with only in-game mechanics,
 and everyone close to me who bullied me into finally finishing this writeup after hearing me rambling about RNGs for the past 2 years :)
