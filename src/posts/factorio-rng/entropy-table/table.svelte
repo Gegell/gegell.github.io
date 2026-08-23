@@ -44,7 +44,7 @@
     <tr>
       <th>Recipe</th>
       <th>Bits per Craft</th>
-      <th>Crafting Time</th>
+      <th>Craft&shy;ing Time</th>
       <th>Items Returned</th>
     </tr>
   </thead>

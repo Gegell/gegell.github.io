@@ -349,7 +349,7 @@ In particular this allows us to visualize this matrix as a bitmap, where a brigh
 For the 6 bit wide toy LFSRs we saw previously, this looks as follows:
 
 <div style="display:flex; gap: 1em; flex-wrap: wrap; justify-content: center;">
-  <PMatrix src="./factorio-rng/img/matrix_toy.png" --pmatrix-width="15%" width=6 height=6 --color-active="var(--accent-1)"/>
+  <PMatrix src="./factorio-rng/img/matrix_toy.png" --pmatrix-width="6em" width=6 height=6 --color-active="var(--accent-1)"/>
 </div>
 
 This mathematical notation allows us to start rewriting some operations in a more compact way.
@@ -577,7 +577,7 @@ $$
 s^{(t)} = A^{-1} \begin{bmatrix}o^{(t)} \\ o^{(t+1)} \\ o^{(t+2)}\end{bmatrix}
 $$
 
-## Implementation Hurdles
+## Implemen&shy;tation Hurdles
 
 The earlier result of inverting the observation matrix $A$ already works. In fact,
 it was the first solver implementation I built in Python.
@@ -745,7 +745,7 @@ These, however, are also quite a bit more expensive and slower than repair pack 
 
 As such, I chose to implement the state readout using the repair pack recycling method, as repair packs are cheap, fast to craft, and unlocked early in-game.
 
-## Actual Implementation
+## Actual Implemen&shy;tation
 To actually implement the reversal and manipulation of the RNG, I've split the computation into the following steps:
 1. **Sampling** the current RNG through observations,
 2. Computing the **current internal** RNG state,
