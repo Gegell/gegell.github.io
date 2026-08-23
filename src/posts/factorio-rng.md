@@ -15,7 +15,7 @@ showToc: true
 <script>
   import {LFSR, SymbolicLFSR} from './factorio-rng/lfsr'
   import QualityCalculator from './factorio-rng/quality-calculator'
-  import EntropyTable from './factorio-rng/entropy-table'
+  import {SmallEntropyTable} from './factorio-rng/entropy-table'
   import Foldout from '$lib/components/Foldout.svelte'
   import rngplot from "./factorio-rng/img/expected_bits_plot.svg?raw"
   import PMatrix from "./factorio-rng/matrix"
@@ -723,17 +723,15 @@ By extracting the relevant recipe data from the raw game dump[^data_dump] we can
   This can then be parsed for further processing, such as extracting the various recipes.
   However, I just used the data bundled with [draftsman](https://github.com/redruin1/factorio-draftsman).
 
-Doing so yields the following table of recipes and their corresponding expected bits of information per craft, alongside how long each craft takes:
+Doing so yields a table of recipes with their corresponding expected bits of information per craft, alongside how long each craft takes.
+The following highlights a small selection of recipes with random outputs, for the table containing all recipes with random outputs see [here](/posts/factorio-rng/full-rng-table/).
 
-<figure>
-  <Foldout --collapsed-height="400px">
-    <EntropyTable />
-  </Foldout>
+<figure id="entropy-table">
+  <SmallEntropyTable />
   <figcaption>
-    Entropy values for recipes with random results.
+    Excerpt of recipes with random results producing bit observations.
   </figcaption>
 </figure>
-
 
 As we can see, there are *waaay* better recipes for extracting information from the game.
 One might think that [scrap recycling](https://wiki.factorio.com/Scrap) would yield a lot of information due to the many different items which can be produced.

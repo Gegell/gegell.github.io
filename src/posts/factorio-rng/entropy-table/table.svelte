@@ -1,20 +1,13 @@
 <script lang="ts">
-  import rawRecipes from './scrap-recycling-recipes-2.0.55.json';
   import { TilesetIcon, recipeTileset, recipeTilesetMap } from '../tileset-image';
   import { attachTooltip } from './attachTooltip';
+  import type { Output, Recipe } from './types';
 
-  type Output = {
-    name: string;
-    amount: number;
-    probability?: number;
-  };
-  type Recipe = {
-    key: string;
-    entropy: number;
-    crafting_speed: number;
-    outputs: Output[];
-  };
-  const recipes = rawRecipes as unknown as Recipe[];
+  interface Props {
+    recipes: Recipe[];
+  }
+
+  let { recipes }: Props = $props();
 
   function formatProbability(probability: number): number {
     return Math.round(probability * 1000) / 10;
