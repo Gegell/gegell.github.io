@@ -1,4 +1,5 @@
 import type { Toc } from "@stefanprobst/rehype-extract-toc";
+import type { Component } from 'svelte';
 
 export type PostSummary = {
 	title: string;
@@ -10,7 +11,7 @@ export type PostSummary = {
 };
 
 export type Post = PostSummary & {
-	content: string;
+	content: Component;
 	published: boolean;
 	toc?: Toc;
     showToc: boolean;
