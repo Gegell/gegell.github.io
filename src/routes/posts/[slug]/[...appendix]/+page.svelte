@@ -78,7 +78,7 @@
 
 	.columns {
 		display: grid;
-		grid-template-columns: 1fr minmax(0, 80ch) 1fr;
+		grid-template-columns: 1fr minmax(0, var(--size-content-3)) 1fr;
 		grid-template-areas:
 			'. content-head .'
 			'left content-main right';
@@ -101,7 +101,7 @@
 	@media (max-width: 155ch) {
 		.columns {
 			display: block;
-			max-inline-size: 80ch;
+			max-inline-size: var(--size-content-3);
 		}
 
 		.head {

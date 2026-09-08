@@ -37,6 +37,10 @@ html {
     --surface-4-light: var(--gray-3);
     --background-light: var(--gray-1);
     --border-light: var(--gray-4);
+
+    /* Sizes */
+    --size-content-3: 80ch;
+    --size-content-2: 60ch;
 }
 
 :root {
