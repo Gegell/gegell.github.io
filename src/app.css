@@ -43,6 +43,11 @@ html {
     --size-content-2: 60ch;
 }
 
+del {
+    color: inherit;
+    background: inherit;
+}
+
 :root {
     color-scheme: dark;
 
@@ -223,6 +228,10 @@ button:hover {
 
 .footnote-backref {
     margin-left: var(--size-1);
+}
+.footnote-ref {
+    margin-left: .1em;
+    font-size: 1.6em;
 }
 
 .shiki {
