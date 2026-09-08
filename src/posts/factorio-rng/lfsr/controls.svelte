@@ -60,18 +60,19 @@
 				reset();
 			}}
 			class="surface-4 reset"
+			aria-label="Reset"
 		>
 			<RiResetLeftFill />
 		</button>
 	{/if}
 
 	<!-- Single Step -->
-	<button onclick={isPlaying ? stop : tick} class="surface-4">
+	<button onclick={isPlaying ? stop : tick} class="surface-4" aria-label="Single step">
 		<RiSkipForwardFill />
 	</button>
 
 	<!-- Play / Pause -->
-	<button onclick={isPlaying ? stop : start} class="surface-4">
+	<button onclick={isPlaying ? stop : start} class="surface-4" aria-label={isPlaying ? 'Pause' : 'Play'}>
 		{#if isPlaying}
 			<RiPauseFill />
 		{:else}
