@@ -1044,20 +1044,124 @@ The assembler which is selected depends on the next output quality.
 In turn this leads to the 5 assemblers outputting the items in a sorted fashion,
 where each belt only ever carries a single type of quality, ordered from left to right in increasing quality.
 
-Finally, the goal that I've been interested in from the get-go:
+Finally, the goal that I've been interested in from the get-go -- and the hook already seen at the start of this post:
 <!-- <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/Gn1vKFUDIFE" title="Automated Legendary" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe> -->
 <figure>
   <video loops muted playsinline disablepictureinpicture controls>
-    <source src="./factorio-rng/img/adapter-3-auto-legendary.mp4" type="video/mp4">
+    <source src="./factorio-rng/img/legendary-autocrafter.mp4" type="video/mp4">
   </video>
   <figcaption>Full automation of legendary items.</figcaption>
 </figure>
 
 This method encapsulates the entire prediction and crafting loop into a closed system, 
 which can do the entire thing (predict and craft) autonomously.
-It involved additional work to calculate how many items need to be scrapped in between crafts to skip to the relevant RNG call,
-as well as enqueuing these skip counts from the predicted raw RNG results which turn sparse after thresholding,
-together with feeding the future RNG predictions back into itself to extend the time horizon.
+We have seen how we can compute the current state, and predict the next $N$ states.
+But how does this let us force RNG values of our desire?
+
+The answer is the simplest of all: It doesn't. At least not directly.
+
+Instead, we can make use of the fact that the sequence of the RNG outputs is deterministic.
+By consuming the bad RNG calls which would need to occur before our desired one, we can "force" the RNG to next output a desired value -- such as one which upon use in the quality rolling code immediately upgrades from common to legendary quality.
+For this we need something to consume the RNG calls.
+
+One automatable aspect is again the creation of partial item stacks. 
+Unlike before however, we do not care about observing the output of these crafts, but only the number of calls each crafting cycle makes.
+Additionally quick crafting cycles lead us to maximize the number of calls per second.
+
+As luck would have it we already saw a recipe which consumes many calls and has a tremendously fast crafting speed: [Scrap Recycling](https://wiki.factorio.com/Scrap).
+It takes 12 calls per completed craft, with a base speed of 0.2 seconds.
+Note that this holds for the number of *completed* crafts, i.e. crafts completed by productivity count as well.
+While this for one means that we scale the calls consumption rate of each recycler with the infinite scrap recycling productivity,
+this simultaneously also requires additional handling of the productivity.
+<figure>
+  <img alt="An array of 10 recyclers controlled by combinators ingesting both gears and scrap to skip rng calls." src="./factorio-rng/img/ingame_skipper.png"/>
+  <figcaption>Consuming scrap and gears to skip bad calls.</figcaption>
+</figure>
+
+Using scrap adds complexity due to the following considerations:
+- We have multiple recyclers, so we need to figure out how much scrap each gets, and how many get an additional one?
+  The last part helps reduce the number of items of the last stage.
+- Recycling scrap steps $12 \times$ rng calls per craft which is not fine grained enough to resolve an exact state.
+  The remaining number of necessary calls are padded with crafts only eating a single call each.
+  Here these are gears.
+- We also need to consider crafts completed due to scrap recycling productivity which occasionally leads to multiple crafts finishing for a single input item.
+  This causes the RNG to be queried for multiple recipe results, i.e. a multiple of the 12 calls.
+- Each recycler is started with at least 1 gear before scrap to reset the previous productivity progress allowing us to avoid tracking that as well.
+  
+> [!note]- The exact function implemented
+> To implement the exact function I first wrote some code to simulate it, then let AI derive a closed formula which I could simplify and translate to combinators.
+> The relevant notebook can be found [here](https://github.com/Gegell/Factorio-RNG-Release/blob/main/02_recycler_skipping_math.ipynb).
+> In short: we require a function $F(R, P, C) = (N_\text{base}, R_\text{extra}, C_\text{rem})$ which computes given $R$ recyclers and productivity level $P$ for any desired number of calls $C$,
+> how many scrap $N_\text{base}$ each recycler gets where $R_\text{extra}$ many get an additional one while $C_\text{rem}$ is the number of additional gears consumed.
+> 
+> The equations can be written as:
+> $$
+> \begin{align*}
+> K_{\text{target}} &= \left\lfloor\frac{C}{12R}\right\rfloor \\
+> N_{\text{base}} &= \left\lfloor\frac{10K_{\text{target}}+9}{10+P}\right\rfloor \\
+> K_{\text{base}} &= \left\lfloor\frac{N_{\text{base}}(10+P)}{10}\right\rfloor \\
+> \Delta K &= \left\lfloor\frac{(N_{\text{base}}+1)(10+P)}{10}\right\rfloor - K_{\text{base}} \\
+> C_{\text{gap}} &= C - 12R K_{\text{base}} \\
+> R_{\text{extra}} &= \left\lfloor\frac{C_{\text{gap}}}{12\Delta K}\right\rfloor \\
+> C_{\text{rem}} &= C_{\text{gap}} \bmod (12\Delta K)
+> \end{align*}
+> $$
+>
+> where $K$ are craft completions, $\Delta K$ the step size if one more craft completes, $R$ the number of recyclers, and $C_\text{gap} / C_\text{rem}$ the number of RNG calls.
+
+There are two additional considerations to make.
+First of all, while we could increase the amount of calls simultaneously predicted in the forwards pass,
+this will bloat the save / blueprint and does not scale well past a couple thousand calls per pass.
+Instead, we can simply feed the output of the last computed RNG states back into the RNG forwarder in a feedback loop.
+
+<figure>
+  <img src="./factorio-rng/img/ingame_prediction_feedback.png" style="height: 30em; max-width: 100%;" alt="The two combinators feeding the output from the simulation back towards the simulator input."/>
+  <figcaption>Feeding the forward simulated RNG registers (right) back into the simulator (top).</figcaption>
+</figure>
+
+The first 2 adapters could simply ingest the output of the [quality prediction module](#quality-prediction).
+To somewhat decouple the prediction and skipping ahead, I decided to decouple the 2 systems, by buffering known good offsets.
+
+For this, as before I compute the threshold which needs to be passed, and now unlike before: Filter out the relevant call indices / offsets and only store those instead.
+This is done by remapping the passing signals into a sequence of new signals, one for each good offset, as seen in the image below.
+The remapping is done at 1 signal per tick.
+Once all passing signals of this iteration are consumed, the above feedback loop is triggered to advance to the next 1000 steps.
+
+<figure>
+  <img src="./factorio-rng/img/ingame_calls_until_legendary_buffer.png" alt="A view into the buffer combinator filled with filtered good quality call offsets."/>
+  <figcaption>A buffer stores all "good" RNG offsets. Prediction state after about a minute.</figcaption>
+</figure>
+
+As this buffer stores absolute offsets from the first time we measured the RNG, we need to compute the number of calls to actually skip to arrive at the next index.
+For this we fetch the current and the next index from the buffer and subtract their offsets, yielding the delta.
+This delta is then what is actually fed towards the skipper.
+The next number of steps is fetched only after the skipper has finished with the current cycle of skipping and creating the next item.
+
+<figure>
+  <img src="./factorio-rng/img/ingame_num_calls_delta.png" style="height:20em; max-width: 100%;" alt="Two selector combinators indexing into the buffer, computing the difference between two adjacent calls."/>
+  <figcaption>Computing the number of calls to skip subtracting two adjacent buffered offsets.</figcaption>
+</figure>
+
+Lastly, we have the issue that the simulated registers may diverge from the actual game RNG state -- for instance if *any* other process has consumed a RNG call unbeknownst to us.
+While we can not prevent such intermittent calls, we can at least detect them. 
+In this instance our predictions will diverge from the actually observable crafting results.
+As such, when too many results (2) differed from our expected quality, we can simply restart the machine automatically, triggering another full state observation and forwarding future states from there on.
+
+<figure>
+  <img src="./factorio-rng/img/ingame_auto_reset.png" alt="The assembler output inserter connected to the thresholding circuit on the right."/>
+  <figcaption>Divergence detector and auto resetter.</figcaption>
+</figure>
+
+Below we now see the entire machine in its full glory.
+I've highlighted the different modules corresponding to the individual segments we constructed previously.
+The general data flow can be read as starting from the bottom left (the assembler) going clockwise:
+Readout (lime), prediction (blue), filtering (yellow), buffering (purple), skipping (black).
+<figure>
+  <video loops muted playsinline disablepictureinpicture controls>
+    <source src="./factorio-rng/img/adapter-3-auto-legendary-overview.mp4" type="video/mp4">
+  </video>
+  <figcaption>The final overarching view of the fully automated crafter.</figcaption>
+</figure>
 
 
 ## Limitations
@@ -1197,6 +1301,10 @@ including the creation of the matrix and Gaussian elimination of said matrix.[^i
 
 [cnide]: https://github.com/charredUtensil/cnide
 
-Thanks go out towards `@earthcomputer` and co. who unknowingly inspired this project,
-as their ["Mess Detector"](https://www.youtube.com/watch?v=FPmQ0rnJjNc) reads out Minecrafts RNG state with only in-game mechanics,
-and everyone close to me who bullied me into finally finishing this writeup after hearing me rambling about RNGs for the past 2 years :)
+Thanks go out towards 
+- `@earthcomputer` and co. who unknowingly inspired this project, as their ["Mess Detector"](https://www.youtube.com/watch?v=FPmQ0rnJjNc) reads out Minecrafts RNG state with only in-game mechanics,
+- `@redruin1` with their [factorio-draftsman](https://github.com/redruin1/factorio-draftsman) library allowing for easy procedural blueprint creation,
+- the [Binary Ninja][BinaryNinja] team for a decompiler which ~~does not shit itself~~[^looking-at-you-ghidra] actually works when encountering the relatively chonky factorio.exe,
+- and everyone close to me who bullied me into finally finishing this writeup after hearing me rambling about RNGs for the past 2 years :)
+
+[^looking-at-you-ghidra]: Unlike ghidra, where even 64 GB RAM were not enough to successfully decompile the game exe.
