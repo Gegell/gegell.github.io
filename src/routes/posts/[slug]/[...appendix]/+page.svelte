@@ -8,6 +8,7 @@
 <!-- SEO -->
 <svelte:head>
 	<title>{data.title}</title>
+	<meta property="description" content={data.description} />
 	<meta property="og:type" content="article" />
 	<meta property="og:title" content={data.title} />
 	<meta property="og:description" content={data.description} />
