@@ -1019,7 +1019,7 @@ which take in these predictions, and do some funny stuff with them.
 Beginning with the first that I've implemented:
 <!-- <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/13axoDiMyGQ" title="Predicted Qualities" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe> -->
 <figure>
-  <video loops muted playsinline controls disablepictureinpicture>
+  <video loop muted playsinline controls disablepictureinpicture>
     <source src="./factorio-rng/img/adapter-1-preview.mp4" type="video/mp4">
   </video>
   <figcaption>Predicts quality levels before the craft.</figcaption>
@@ -1033,7 +1033,7 @@ keeping the display relevant at all times.
 The next one was the following:
 <!-- <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/ceQ5AuEhz30" title="Sorted Qualities" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe> -->
 <figure>
-  <video loops muted playsinline controls disablepictureinpicture>
+  <video loop muted playsinline controls disablepictureinpicture>
     <source src="./factorio-rng/img/adapter-2-presort.mp4" type="video/mp4">
   </video>
   <figcaption>Selects assembler by next up quality.</figcaption>
@@ -1047,7 +1047,7 @@ where each belt only ever carries a single type of quality, ordered from left to
 Finally, the goal that I've been interested in from the get-go -- and the hook already seen at the start of this post:
 <!-- <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/Gn1vKFUDIFE" title="Automated Legendary" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe> -->
 <figure>
-  <video loops muted playsinline disablepictureinpicture controls>
+  <video loop muted playsinline disablepictureinpicture controls>
     <source src="./factorio-rng/img/legendary-autocrafter.mp4" type="video/mp4">
   </video>
   <figcaption>Full automation of legendary items.</figcaption>
@@ -1157,7 +1157,7 @@ I've highlighted the different modules corresponding to the individual segments 
 The general data flow can be read as starting from the bottom left (the assembler) going clockwise:
 Readout (lime), prediction (blue), filtering (yellow), buffering (purple), skipping (black).
 <figure>
-  <video loops muted playsinline disablepictureinpicture controls>
+  <video loop muted playsinline disablepictureinpicture controls>
     <source src="./factorio-rng/img/adapter-3-auto-legendary-overview.mp4" type="video/mp4">
   </video>
   <figcaption>The final overarching view of the fully automated crafter.</figcaption>
